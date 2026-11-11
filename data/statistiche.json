@@ -1,0 +1,8 @@
+{
+  "versione": 1,
+  "creato": null,
+  "aggiornato": null,
+  "totale": { "svolti": 0, "esatte": 0, "conAiuto": 0, "errate": 0, "erroriTotali": 0, "consecutiveEsatte": 0, "maxConsecutiveEsatte": 0, "tempoTotaleSec": 0 },
+  "perTipo": {},
+  "sessioni": []
+}

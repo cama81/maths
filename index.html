@@ -11,13 +11,21 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Matematica">
+<script>
+// Se qualcosa va storto all'avvio mostra l'errore invece di una pagina vuota
+window.addEventListener('error', function (e) {
+  var a = document.getElementById('app');
+  if (a && a.textContent.trim() === 'Caricamento…') a.innerHTML = '<p style="padding:20px">Errore: ' + e.message + '</p>';
+});
+</script>
 </head>
 <body>
-<div id="app"></div>
+<div id="app"><p style="text-align:center;padding:30px">Caricamento…</p></div>
 <input type="file" id="file" accept=".json,application/json" hidden>
-<!-- script classici (non moduli): l'app funziona anche aprendo index.html con doppio clic -->
+<!-- script classici (non moduli); l'ordine conta -->
 <script src="js/utils.js"></script>
-<script src="js/generators.js"></script>
+<script src="js/models.js"></script>
+<script src="js/stats.js"></script>
 <script src="js/custom.js"></script>
 <script src="js/render.js"></script>
 <script src="js/app.js"></script>

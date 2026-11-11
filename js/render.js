@@ -1,5 +1,4 @@
 // Disegno dell'interfaccia: archetti, caselle, abaco, tastierino
-// Archetto tra due caselle con il salto al centro: sopra (+) per avanzare, sotto (−) per tornare indietro
 function hopHTML(d) {
   if (d > 0) return `<svg class="hop up" viewBox="0 0 40 56" aria-label="${signed(d)}"><text x="20" y="12">${signed(d)}</text><path d="M3 34 Q20 -2 37 34"/><polygon points="37,37 31,29 41,30"/></svg>`;
   return `<svg class="hop down" viewBox="0 0 40 56" aria-label="${signed(d)}"><path d="M3 22 Q20 58 37 22"/><polygon points="37,19 31,27 41,26"/><text x="20" y="54">${signed(d)}</text></svg>`;
@@ -23,5 +22,6 @@ function padHTML() {
   return `<div class="pad">${[1,2,3,4,5,6,7,8,9].map(d => `<button onclick="key('${d}')">${d}</button>`).join('')}<button onclick="key('x')">⌫</button><button onclick="key('0')">0</button><button class="go" onclick="check()">OK</button></div>`;
 }
 function shell(inner) {
-  $('#app').innerHTML = `<div class="top"><button onclick="home()">← Menu</button><div class="stars">⭐ ${stars}</div></div><div class="card">${inner}</div>`;
+  const n = S ? S.list.length : 0, i = S ? S.i : 0;
+  $('#app').innerHTML = `<div class="top"><button onclick="home()">← Menu</button><div class="prog">${i + 1} / ${n}</div><div class="stars">⭐ ${stars}</div></div><div class="bar"><i style="width:${n ? i / n * 100 : 0}%"></i></div><div class="card">${inner}</div>`;
 }
