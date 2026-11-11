@@ -34,6 +34,13 @@ many(30, () => { // numero mancante: totale e 3-4 addendi, uno nascosto
   for (let g = 0; g < 100; g++) { const cuts = new Set(); while (cuts.size < k - 1) cuts.add(R(1, tot - 1)); const c = [0, ...[...cuts].sort((x, y) => x - y), tot]; parts = c.slice(1).map((v, i) => v - c[i]); if (parts.every(p => p > 0)) break; }
   const h = R(0, parts.length - 1); return { tipo: 'mancante', totale: tot, numeri: parts.map((p, i) => i === h ? null : p) };
 });
+many(30, () => { // numero mancante facile: solo decine intere e cifre
+  const kind = pick([0, 0, 1]); let terms;
+  if (kind === 0) { const a = 10 * R(1, 8), b = 10 * R(1, 9), u = R(1, 9); terms = [a, b, u]; } else { const a = 10 * R(1, 9), u = R(1, 9), v = R(1, 9); terms = [a, u, v]; }
+  const tot = terms.reduce((x, y) => x + y, 0); if (tot > 100) terms = [10, 20, 5];
+  terms = terms.sort(() => Math.random() - .5); const h = R(0, 2);
+  return { tipo: 'mancante', livello: 'facile', totale: terms.reduce((x, y) => x + y, 0), numeri: terms.map((p, i) => i === h ? null : p) };
+});
 many(20, () => ({ tipo: 'abaco', numero: R(1, 99), modalita: 'leggi' }));
 many(20, () => ({ tipo: 'abaco', numero: R(1, 99), modalita: 'costruisci' }));
 

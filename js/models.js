@@ -9,8 +9,9 @@ const MODES = {
   pd:    { c: '169,139,230', icon: '↔️', name: 'Prima e dopo' },
   ord:   { c: '110,185,235', icon: '📶', name: 'Metti in ordine' },
   mm:    { c: '236,95,127', icon: '🎯', name: 'Il più piccolo e il più grande' },
-  colf:  { c: '255,190,130', icon: '🪜', name: 'Colonna facile' },
+  colf:  { c: '255,190,130', icon: '🧩', name: 'Colonna facile' },
   col:   { c: '255,160,130', icon: '🧩', name: 'Calcoli in colonna' },
+  manf:  { c: '150,205,235', icon: '🔍', name: 'Mancante facile' },
   man:   { c: '130,190,230', icon: '🔍', name: 'Il numero mancante' },
   abaco: { c: '102,190,140', icon: '🧮', name: 'L’abaco' }
 };
@@ -86,7 +87,11 @@ function parseOne(e) {
     if (n.filter(x => x === null).length !== 1 || n.some(x => x !== null && !inR(x))) throw new Error('"numeri" deve contenere un solo null e il resto interi da 0 a 100');
     const miss = e.totale - n.reduce((s, x) => s + (x === null ? 0 : x), 0);
     if (!inR(miss)) throw new Error('il numero mancante verrebbe fuori da 0–100: controlla il totale');
-    return { kind: 'fill', mode: 'man', title: `Quale numero manca per arrivare a ${e.totale}?`, cells: n, deltas: [], miss: { total: e.totale }, ans: [miss] };
+    const liv = e.livello || 'standard';
+    if (!['standard', 'facile'].includes(liv)) throw new Error('"livello" deve essere standard o facile');
+    const easy = x => x > 0 && (x < 10 || x % 10 === 0);
+    if (liv === 'facile' && !(n.every(x => x === null || easy(x)) && easy(miss))) throw new Error('livello facile: tutti i numeri (anche quello mancante) devono essere decine intere (10, 20, 30…) oppure cifre (1–9)');
+    return { kind: 'fill', mode: liv === 'facile' ? 'manf' : 'man', title: `Quale numero manca per arrivare a ${e.totale}?`, cells: n, deltas: [], miss: { total: e.totale }, ans: [miss] };
   }
   if (t === 'ordina') {
     if (!distinct(e.numeri) || e.numeri.length < 3 || e.numeri.length > 6) throw new Error('"numeri": da 3 a 6 interi diversi da 0 a 100');
