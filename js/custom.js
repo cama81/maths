@@ -1,32 +1,43 @@
-// Caricamento di data/db.json (esercizi) ed eventuale import di altri file con lo stesso formato
-const LS_KEY = 'matematica2.esercizi';
-let DB = [];
-const safeParse = e => { try { return parseOne(e); } catch (x) { return null; } };
-let CUSTOM_RAW = (() => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch (e) { return []; } })();
-let CUSTOM = CUSTOM_RAW.map(safeParse).filter(Boolean);
-const saveCustom = () => { try { localStorage.setItem(LS_KEY, JSON.stringify(CUSTOM_RAW)); } catch (e) {} };
+// Caricamento degli esercizi. L'import da file SOSTITUISCE data/db.json su questo dispositivo (finché non lo ripristini).
+const LS_KEY = 'matematica2.db';
+let DB = [], DB_IMPORTED = false;
+try { localStorage.removeItem('matematica2.esercizi'); } catch (e) {} // vecchia chiave (esercizi aggiunti)
+
+function buildDB(list) {
+  const db = [], raw = [], bad = [];
+  list.forEach((e, i) => { try { db.push(parseOne(e)); raw.push(e); } catch (x) { bad.push(`Esercizio ${i + 1}: ${x.message}`); } });
+  return { db, raw, bad };
+}
+const readList = j => Array.isArray(j) ? j : j && j.esercizi;
 
 async function loadDB() {
+  try {
+    const ov = JSON.parse(localStorage.getItem(LS_KEY));
+    if (Array.isArray(ov)) { const { db } = buildDB(ov); if (db.length) { DB = db; DB_IMPORTED = true; return; } }
+  } catch (e) {}
   const r = await fetch('data/db.json', { cache: 'no-cache' });
   if (!r.ok) throw new Error('db.json: ' + r.status);
-  const j = await r.json(), list = Array.isArray(j) ? j : j.esercizi;
+  const list = readList(await r.json());
   if (!Array.isArray(list)) throw new Error('db.json: manca "esercizi"');
-  DB = []; const bad = [];
-  list.forEach((e, i) => { try { DB.push(parseOne(e)); } catch (x) { bad.push(`#${i + 1}: ${x.message}`); } });
+  const { db, bad } = buildDB(list);
   if (bad.length) console.warn('db.json: esercizi scartati', bad);
-  if (!DB.length) throw new Error('db.json vuoto');
+  if (!db.length) throw new Error('db.json vuoto');
+  DB = db; DB_IMPORTED = false;
 }
 function importFile(file, done) {
   const rd = new FileReader();
   rd.onload = () => {
     let data; try { data = JSON.parse(rd.result); } catch (e) { return done({ added: 0, errors: ['File JSON non valido: ' + e.message] }); }
-    const list = Array.isArray(data) ? data : data && data.esercizi;
+    const list = readList(data);
     if (!Array.isArray(list)) return done({ added: 0, errors: ['Manca l’elenco "esercizi"'] });
-    const errors = []; let added = 0;
-    list.forEach((e, i) => { try { CUSTOM.push(parseOne(e)); CUSTOM_RAW.push(e); added++; } catch (x) { errors.push(`Esercizio ${i + 1}: ${x.message}`); } });
-    saveCustom(); done({ added, errors });
+    const { db, raw, bad } = buildDB(list);
+    if (!db.length) return done({ added: 0, errors: bad.length ? bad : ['Nessun esercizio valido nel file'] });
+    DB = db; DB_IMPORTED = true; // sostituisce gli esercizi di db.json
+    try { localStorage.setItem(LS_KEY, JSON.stringify(raw)); }
+    catch (e) { bad.push('Salvataggio locale non riuscito: gli esercizi valgono solo fino alla chiusura dell’app'); }
+    done({ added: db.length, errors: bad });
   };
   rd.onerror = () => done({ added: 0, errors: ['Impossibile leggere il file'] });
   rd.readAsText(file);
 }
-function clearCustom() { CUSTOM = []; CUSTOM_RAW = []; saveCustom(); }
+async function resetDB() { try { localStorage.removeItem(LS_KEY); } catch (e) {} await loadDB(); }

@@ -12,11 +12,11 @@ function cellsHTML(m) {
 }
 function abSVG(d, u) {
   const rod = (x, n, col, l) => {
-    let s = `<line x1="${x}" y1="20" x2="${x}" y2="250" stroke="#8a7a5a" stroke-width="6" stroke-linecap="round"/>`;
+    let s = `<line x1="${x}" y1="20" x2="${x}" y2="250" stroke="#d9a441" stroke-width="6" stroke-linecap="round"/>`;
     for (let i = 0; i < n; i++) s += `<circle cx="${x}" cy="${232 - i * 24}" r="12" fill="${col}"/>`;
     return s + `<text x="${x}" y="276" text-anchor="middle" font-size="16" font-weight="700" fill="currentColor">${l}</text>`;
   };
-  return `<div class="ab" id="abw"><svg viewBox="0 0 260 285" width="230"><rect x="10" y="250" width="240" height="8" rx="4" fill="#8a7a5a"/>${rod(75, d, '#4f7cff', 'Decine')}${rod(185, u, '#ff8a3d', 'Unità')}</svg></div>`;
+  return `<div class="ab" id="abw"><svg viewBox="0 0 260 285" width="230"><rect x="10" y="250" width="240" height="8" rx="4" fill="#d9a441"/>${rod(75, d, '#8e63d1', 'Decine')}${rod(185, u, '#ff6fae', 'Unità')}</svg></div>`;
 }
 function padHTML() {
   return `<div class="pad">${[1,2,3,4,5,6,7,8,9].map(d => `<button onclick="key('${d}')">${d}</button>`).join('')}<button onclick="key('x')">⌫</button><button onclick="key('0')">0</button><button class="go" onclick="check()">OK</button></div>`;

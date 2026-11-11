@@ -13,4 +13,3 @@ function bump(o, r) {
 function recordResult(tipo, r) { bump(STATS.totale, r); bump(STATS.perTipo[tipo] = STATS.perTipo[tipo] || zero(), r); saveStats(); }
 function recordSession(s) { STATS.sessioni.push(Object.assign({ data: new Date().toISOString() }, s)); STATS.sessioni = STATS.sessioni.slice(-100); saveStats(); }
 function exportStats() { download('statistiche.json', JSON.stringify(STATS, null, 2)); }
-function statsLine() { const t = STATS.totale; return t.svolti ? `Esercizi svolti: ${t.svolti} · esatte: ${t.esatte} · record di fila: ${t.maxConsecutiveEsatte}` : ''; }

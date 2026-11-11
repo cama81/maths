@@ -17,7 +17,7 @@ Giochi: serie, più e meno, segni < = >, prima e dopo, metti in ordine, il più 
 Pulsante 💡 Aiuto: mostra alcune soluzioni tra cui scegliere (esercizio contato "con aiuto").
 
 ## data/db.json
-Per cambiare gli esercizi basta sostituire il file e ripubblicare (poi alza `VERSION` in `sw.js`). Numeri da 0 a 100.
+Per cambiare gli esercizi basta sostituire il file e ripubblicare (poi alza `VERSION` in `sw.js` e `APP_VERSION` in `js/utils.js`). Numeri da 0 a 100.
 - serie: `{"tipo":"serie","numeri":[10,15,null,25,null,35]}` (null = da completare, passo ricavato in automatico, anche all'indietro)
 - salti: `{"tipo":"salti","partenza":34,"operazioni":[5,-3,10]}`
 - confronto: `{"tipo":"confronto","a":45,"b":54}`
@@ -25,11 +25,11 @@ Per cambiare gli esercizi basta sostituire il file e ripubblicare (poi alza `VER
 - ordina: `{"tipo":"ordina","numeri":[42,7,63,19],"ordine":"crescente|decrescente"}` (3–6 numeri diversi)
 - minmax: `{"tipo":"minmax","numeri":[42,7,63],"chiedi":"minore|maggiore"}` (3–6 numeri diversi)
 - abaco: `{"tipo":"abaco","numero":37,"modalita":"leggi|costruisci"}`
-Le voci non valide vengono scartate (avviso nella console del browser). Lo stesso formato si può importare dal menu ("Importa esercizi"): gli esercizi importati restano solo su quel dispositivo.
+Le voci non valide vengono scartate (avviso nella console del browser). Lo stesso formato si importa dal menu ⋮ → "Importa esercizi": gli esercizi del file SOSTITUISCONO quelli di db.json su quel dispositivo (restano salvati lì). Mentre un import è attivo, le modifiche a db.json online non si vedono su quel dispositivo: serve ⋮ → "Ripristina esercizi originali".
 
 ## Statistiche
 Un sito statico non può scrivere nei file del repository: le statistiche sono salvate nel browser del dispositivo, con la struttura di `data/statistiche.json`.
-Dal menu "Esporta statistiche" scarica il file aggiornato. Per ogni esercizio: esito (esatta / con aiuto / errata), tentativi sbagliati, tempo; più serie di esatte consecutive (totale e per gioco) e le ultime 100 sezioni.
+Le statistiche si consultano con l'icona 📊 in alto a destra; dal menu ⋮ → "Esporta statistiche" si scarica il file aggiornato. Per ogni esercizio: esito (esatta / con aiuto / errata), tentativi sbagliati, tempo; più serie di esatte consecutive (totale e per gioco) e le ultime 100 sezioni.
 
 ## Aggiornamenti dell'app installata
-Online, l'app scarica da sola i file nuovi e si ricarica quando sei nel menu. Dopo ogni modifica cambia `VERSION` in `sw.js`.
+Online, l'app scarica da sola i file nuovi e si ricarica quando sei nel menu. Dopo ogni modifica cambia `VERSION` in `sw.js` e `APP_VERSION` in `js/utils.js` (il numero mostrato nel menu ⋮, insieme all'autore).

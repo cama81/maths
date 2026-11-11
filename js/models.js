@@ -3,13 +3,13 @@
 //  kind 'cmp'   -> a, b          kind 'pick'  -> nums, ask ('min'|'max')
 //  kind 'order' -> nums, dir ('cresc'|'decr')          kind 'build' -> v (numero da costruire sull'abaco)
 const MODES = {
-  serie: { icon: '🔢', name: 'Serie di numeri' },
-  salti: { icon: '➕', name: 'Più e meno' },
-  conf:  { icon: '⚖️', name: 'Quale segno?' },
-  pd:    { icon: '↔️', name: 'Prima e dopo' },
-  ord:   { icon: '📶', name: 'Metti in ordine' },
-  mm:    { icon: '🎯', name: 'Il più piccolo e il più grande' },
-  abaco: { icon: '🧮', name: 'L’abaco' }
+  serie: { c: '#ff6fae', icon: '🔢', name: 'Serie di numeri' },
+  salti: { c: '#1fb5a3', icon: '➕', name: 'Più e meno' },
+  conf:  { c: '#f5b82e', icon: '⚖️', name: 'Quale segno?' },
+  pd:    { c: '#9b6bd6', icon: '↔️', name: 'Prima e dopo' },
+  ord:   { c: '#5db7f0', icon: '📶', name: 'Metti in ordine' },
+  mm:    { c: '#e8456b', icon: '🎯', name: 'Il più piccolo e il più grande' },
+  abaco: { c: '#4fb477', icon: '🧮', name: 'L’abaco' }
 };
 const inR = n => Number.isInteger(n) && n >= 0 && n <= 100;
 

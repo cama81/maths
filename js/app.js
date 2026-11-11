@@ -6,7 +6,7 @@ let stars = 0, mode = null, S = null, q = null, cur = 0, buf = '', tries = 0, er
 const PRAISE = ['Bravissima! 🎉', 'Perfetta! ⭐', 'Sei una campionessa! 🏆', 'Che brava! 👏', 'Ottimo lavoro! 🌟'];
 const HELPED = ['Brava, ce l’hai fatta! 💪', 'Ben fatto! La prossima volta ci riesci da sola! 🌈'];
 
-const pool = m => DB.concat(CUSTOM).filter(x => x.mode === m);
+const pool = m => DB.filter(x => x.mode === m);
 
 async function init() {
   $('#app').innerHTML = '<p class="sub" style="padding:30px">Caricamento…</p>';
@@ -19,20 +19,53 @@ async function init() {
 function home(report) {
   if (updatePending) return location.reload(); // nuova versione pronta
   mode = null; S = null;
-  const n = CUSTOM.length;
-  $('#app').innerHTML = `<h1>Matematica in gioco</h1><p class="sub">Scegli un gioco! Ogni sezione ha ${CFG.perSezione} esercizi</p>
-  <div class="menu">${Object.entries(MODES).map(([k, m]) => `<button onclick="start('${k}')" ${pool(k).length ? '' : 'disabled'}><span>${m.icon}</span>${m.name}</button>`).join('')}
-  <button onclick="start('mix')"><span>🎲</span>Mix di tutto (${CFG.mixPerFunzione} per gioco)</button></div>
-  <p class="report">${statsLine()}</p>
-  <div class="tools"><button onclick="$('#file').click()">⬆ Importa esercizi</button><button onclick="exportStats()">📊 Esporta statistiche</button>${installEvt ? '<button onclick="installApp()">📲 Installa app</button>' : ''}${n ? `<button onclick="clearCustom();home()">🗑 Svuota importati (${n})</button>` : ''}</div>
+  $('#app').innerHTML = `<div class="hdr"><div class="hbtns"><button class="ic" onclick="statsScreen()" aria-label="Statistiche" title="Statistiche">📊</button><button class="ic" id="mbtn" onclick="toggleMenu()" aria-label="Menu" title="Menu">⋮</button></div>
+  <div class="dd" id="dd" hidden>
+    <button onclick="menuAct('imp')">⬆ Importa esercizi</button>
+    <button onclick="menuAct('exp')">📊 Esporta statistiche</button>
+    ${installEvt ? '<button onclick="menuAct(\'inst\')">📲 Installa app</button>' : ''}
+    ${DB_IMPORTED ? '<button onclick="menuAct(\'reset\')">↩ Ripristina esercizi originali</button>' : ''}
+    <div class="ddinfo">Esercizi in uso: ${DB.length}${DB_IMPORTED ? ' (importati)' : ''}<br>Versione ${APP_VERSION}<br>Autore: Luigi Antonucci</div>
+  </div></div>
+  <h1><span>👑</span> <span class="g">Matematica in gioco</span> <span>✨</span></h1><p class="sub">Scegli un gioco! Ogni sezione ha ${CFG.perSezione} esercizi</p>
+  <div class="menu">${Object.entries(MODES).map(([k, m]) => `<button style="--c:${m.c}" onclick="start('${k}')" ${pool(k).length ? '' : 'disabled'}><span>${m.icon}</span>${m.name}</button>`).join('')}
+  <button class="mix" onclick="start('mix')"><span>🎲</span>Mix di tutto (${CFG.mixPerFunzione} per gioco)</button></div>
   <div class="report" id="rep"></div>`;
-  if (report && report.errors) {
-    const r = $('#rep');
-    r.className = 'report ' + (report.errors.length ? 'err' : 'ok');
-    r.innerHTML = (report.added ? `Aggiunti ${report.added} esercizi.` : 'Nessun esercizio aggiunto.') +
-      (report.errors.length ? `<ul>${report.errors.slice(0, 6).map(e => `<li>${e}</li>`).join('')}</ul>` : '');
+  if (report) {
+    const r = $('#rep'), errors = report.errors || [];
+    r.className = 'report ' + (errors.length ? 'err' : 'ok');
+    r.innerHTML = (report.msg || (report.added ? `Importati ${report.added} esercizi: ora sostituiscono quelli di db.json su questo dispositivo.` : 'Nessun esercizio importato.')) +
+      (errors.length ? `<ul>${errors.slice(0, 6).map(e => `<li>${e}</li>`).join('')}</ul>` : '');
   }
 }
+function toggleMenu() { const d = $('#dd'); if (d) d.hidden = !d.hidden; }
+document.addEventListener('click', e => { const d = $('#dd'); if (d && !d.hidden && !e.target.closest('#dd,#mbtn')) d.hidden = true; });
+function menuAct(a) {
+  const d = $('#dd'); if (d) d.hidden = true;
+  if (a === 'imp') $('#file').click();
+  else if (a === 'exp') exportStats();
+  else if (a === 'inst') installApp();
+  else if (a === 'reset') resetDB().then(() => home({ msg: 'Esercizi originali (data/db.json) ripristinati.' }));
+}
+
+// ---- Schermata statistiche ----
+function statsScreen() {
+  mode = 'stats';
+  const t = STATS.totale, pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '–';
+  const name = k => k === 'mix' ? '🎲 Mix' : MODES[k] ? `${MODES[k].icon} ${MODES[k].name}` : k;
+  const rows = Object.entries(MODES).map(([k, m]) => { const s = STATS.perTipo[k] || zero();
+    return `<tr><td>${m.icon} ${m.name}</td><td>${s.svolti}</td><td>${pct(s.esatte, s.svolti)}</td><td>${s.erroriTotali}</td><td>${s.maxConsecutiveEsatte}</td></tr>`; }).join('');
+  const sess = STATS.sessioni.slice(-8).reverse().map(s => `<div class="sess"><span>${name(s.sezione)}<br><small>${new Date(s.data).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</small></span><span>${s.esatte} ✓ · ${s.conAiuto} 💡 · ${s.errate} ✗<br><small>su ${s.totale}</small></span></div>`).join('');
+  $('#app').innerHTML = `<div class="top"><button onclick="home()">← Menu</button><h2 class="ttl">📊 Statistiche</h2><span style="width:70px"></span></div>
+  ${t.svolti ? `<div class="card"><div class="grid3">
+    <div><b>${t.svolti}</b>esercizi svolti</div><div><b>${pct(t.esatte, t.svolti)}</b>esatte</div><div><b>${t.maxConsecutiveEsatte}</b>record di fila</div>
+    <div><b>${t.esatte}</b>esatte</div><div><b>${t.conAiuto}</b>con aiuto</div><div><b>${t.errate}</b>sbagliate</div>
+    <div><b>${t.erroriTotali}</b>errori totali</div><div><b>${Math.round(t.tempoTotaleSec / t.svolti)}s</b>tempo medio</div><div><b>${t.consecutiveEsatte}</b>esatte di fila ora</div></div></div>
+  <div class="card"><h3>Per gioco</h3><div style="overflow-x:auto"><table class="tbl"><tr><th>Gioco</th><th>Svolti</th><th>Esatte</th><th>Errori</th><th>Record</th></tr>${rows}</table></div></div>
+  ${sess ? `<div class="card"><h3>Ultime sezioni</h3>${sess}</div>` : ''}`
+  : '<div class="card"><p class="q">Ancora nessun esercizio svolto. Gioca una sezione e qui vedrai i risultati! ⭐</p></div>'}`;
+}
+
 $('#file').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) importFile(f, home); });
 
 function start(m) {
