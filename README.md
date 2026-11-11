@@ -1,4 +1,4 @@
-# Matematica in gioco – 2ª elementare (v1.7.0)
+# Matematica in gioco – 2ª elementare (v1.8.0)
 
 Va pubblicata su un sito (GitHub Pages) o aperta con un server locale (`python3 -m http.server`), perché legge `data/db.json`.
 
@@ -38,3 +38,7 @@ Nota: in un sito statico la password è una protezione "da bambino", non sicurez
 
 ## Aggiornamenti dell'app installata
 Online, l'app scarica da sola i file nuovi e si ricarica quando sei nel menu. Dopo ogni modifica cambia `VERSION` in `sw.js` e `APP_VERSION` in `js/utils.js`.
+
+## Suoni e voce
+Risposta sbagliata: suono morbido "bu-bu". Risposta giusta: voce femminile che dice "Brava!". Fine sezione (percentuale di esatte, le risposte con aiuto valgono metà): dal 70% "Ottimo lavoro!", dal 40% al 70% "Ci siamo quasi!", sotto il 40% "Puoi fare meglio!". Si spegne da ⋮ → "Suoni e voce".
+La voce è quella di sintesi vocale del telefono/tablet/PC (voce italiana, resa più acuta): cambia da dispositivo a dispositivo. Se il dispositivo non ha una voce italiana, la sintesi usa quella predefinita o resta muta. Per un risultato uguale ovunque servirebbero registrazioni audio vere (file mp3 in una cartella `audio/`).

@@ -2,6 +2,7 @@
 let stars = 0, mode = null, S = null, q = null, cur = 0, buf = '', tries = 0, errs = 0, helped = false, locked = false, t0 = 0,
   abN = 0, abU = 0, hp = null, placed = [], bank = [], updatePending = false, installEvt = null, statView = 'sempre';
 
+const BRAVA = ['Brava!', 'Brava!', 'Che brava!', 'Bravissima!'];
 const PRAISE = ['Bravissima! 🎉', 'Perfetta! ⭐', 'Sei una campionessa! 🏆', 'Che brava! 👏', 'Ottimo lavoro! 🌟'];
 const HELPED = ['Brava, ce l’hai fatta! 💪', 'Ben fatto! La prossima volta ci riesci da sola! 🌈'];
 
@@ -17,11 +18,12 @@ async function init() {
 
 function home(report) {
   if (updatePending) return location.reload(); // nuova versione pronta
-  mode = null; S = null;
+  mode = null; S = null; stopVoice();
   $('#app').innerHTML = `<div class="hdr"><h1><span>👑</span> <span class="g">Matematica in gioco</span></h1>
   <div class="hbtns"><button class="ic" onclick="statsScreen()" aria-label="Statistiche" title="Statistiche">📊</button><button class="ic" id="mbtn" onclick="toggleMenu()" aria-label="Menu" title="Menu">⋮</button></div>
   <div class="dd" id="dd" hidden>
     <button onclick="menuAct('imp')">⬆ Importa esercizi</button>
+    <button onclick="menuAct('snd')">${SOUND_ON ? '🔊 Suoni e voce: attivi' : '🔇 Suoni e voce: spenti'}</button>
     <button onclick="menuAct('exp')">📊 Esporta statistiche</button>
     ${installEvt ? '<button onclick="menuAct(\'inst\')">📲 Installa app</button>' : ''}
     ${DB_IMPORTED ? '<button onclick="menuAct(\'reset\')">↩ Ripristina esercizi originali</button>' : ''}
@@ -44,6 +46,7 @@ document.addEventListener('click', e => { const d = $('#dd'); if (d && !d.hidden
 function menuAct(a) {
   const d = $('#dd'); if (d) d.hidden = true;
   if (a === 'imp') $('#file').click();
+  else if (a === 'snd') { setSound(!SOUND_ON); if (SOUND_ON) speak('Brava!'); home(); }
   else if (a === 'exp') exportStats();
   else if (a === 'inst') installApp();
   else if (a === 'reset') resetDB().then(() => home({ msg: 'Esercizi originali (data/db.json) ripristinati.' }));
@@ -126,6 +129,7 @@ function show() {
   }
 }
 
+function wrongAns() { errs++; soundWrong(); }
 function say(t, c) { const m = $('#msg'); if (m) { m.textContent = t; m.className = 'msg ' + c; } }
 function nextBtn() { if ($('.next')) return; const b = document.createElement('button'); b.className = 'big next'; b.textContent = 'Avanti →'; b.onclick = advance; $('.card').appendChild(b); }
 function advance() { if (!S || mode === null) return; S.i++; if (S.i >= S.list.length) summary(); else show(); }
@@ -138,7 +142,7 @@ function finish(esito) {
   if (esito === 'esatta') { S.esatte++; stars++; } else if (esito === 'aiuto') S.aiuto++; else S.errate++;
   $('.stars').textContent = '⭐ ' + stars;
   if (esito === 'errata') nextBtn();
-  else { say(pick(esito === 'esatta' ? PRAISE : HELPED), 'ok'); const s = S; setTimeout(() => { if (S === s) advance(); }, 1300); }
+  else { say(pick(esito === 'esatta' ? PRAISE : HELPED), 'ok'); speak(pick(BRAVA)); const s = S; setTimeout(() => { if (S === s) advance(); }, 1300); }
 }
 const solved = () => finish(helped ? 'aiuto' : 'esatta');
 
@@ -157,7 +161,7 @@ function check() {
     s.classList.add('done'); tries = 0; buf = ''; cur++;
     if (cur >= q.ans.length) solved(); else { say('Giusto! Continua', 'ok'); hl(); }
   } else {
-    errs++; tries++; s.classList.add('shake'); setTimeout(() => s.classList.remove('shake'), 300);
+    wrongAns(); tries++; s.classList.add('shake'); setTimeout(() => s.classList.remove('shake'), 300);
     if (tries >= 2) { revealFrom(cur); say('Ecco la risposta giusta. Andiamo avanti!', 'no'); finish('errata'); }
     else { say('Riprova, ce la puoi fare!', 'no'); buf = ''; s.textContent = ''; }
   }
@@ -168,7 +172,7 @@ function cmpPick(s) {
   if (locked) return;
   const r = q.a < q.b ? '<' : q.a > q.b ? '>' : '=';
   if (s === r) return solved();
-  errs++; tries++; const b = $('#c' + '<=>'.indexOf(s)); b.disabled = true; b.classList.add('wrong');
+  wrongAns(); tries++; const b = $('#c' + '<=>'.indexOf(s)); b.disabled = true; b.classList.add('wrong');
   if (tries >= 2) { say('Il segno giusto era ' + r, 'no'); finish('errata'); } else say('Riprova! Quale numero è più grande?', 'no');
 }
 
@@ -177,7 +181,7 @@ const pkRight = () => q.nums.indexOf(q.ask === 'min' ? Math.min(...q.nums) : Mat
 function pickNum(i) {
   if (locked) return;
   if (i === pkRight()) return solved();
-  errs++; tries++; const b = $('#pk' + i); b.disabled = true; b.classList.add('wrong');
+  wrongAns(); tries++; const b = $('#pk' + i); b.disabled = true; b.classList.add('wrong');
   if (tries >= 2) { say('Era il ' + q.nums[pkRight()], 'no'); finish('errata'); } else say('Riprova! Confronta bene i numeri', 'no');
 }
 
@@ -198,7 +202,7 @@ function ordCheck() {
   if (placed.includes(-1)) return say('Metti tutti i numeri nelle caselle', 'no');
   const t = ordTarget(q.dir);
   if (placed.map(b => bank[b]).join() === t.join()) return solved();
-  errs++; tries++;
+  wrongAns(); tries++;
   if (tries >= 2) { ordFill(t); say('Ecco l’ordine giusto. Andiamo avanti!', 'no'); finish('errata'); }
   else say('Quasi! Guarda bene da quale numero si parte', 'no');
 }
@@ -212,7 +216,7 @@ function abAdj(w, d) {
 function abCheck() {
   if (locked) return;
   if (abN * 10 + abU === q.v) return solved();
-  errs++; tries++;
+  wrongAns(); tries++;
   if (tries >= 2) { abN = Math.floor(q.v / 10); abU = q.v % 10; $('#abw').outerHTML = abSVG(abN, abU); say(`Servono ${abN} decine e ${abU} unità`, 'no'); finish('errata'); }
   else say('Quasi! Conta ancora le perline', 'no');
 }
@@ -225,7 +229,7 @@ function showHelp(opts, onRight) {
 function helpPick(i) {
   if (locked) return;
   if (hp.opts[i].ok) return hp.onRight();
-  errs++; const b = $('#o' + i); b.disabled = true; b.classList.add('wrong'); say('Non è questa, prova un’altra!', 'no');
+  wrongAns(); const b = $('#o' + i); b.disabled = true; b.classList.add('wrong'); say('Non è questa, prova un’altra!', 'no');
 }
 function hideSomeWrong(prefix, n, rightIdx, keepOne) {
   const wrong = [...Array(n).keys()].filter(i => i !== rightIdx && !$('#' + prefix + i).disabled);
@@ -255,10 +259,9 @@ function askHelp() {
 function summary() {
   const n = S.list.length, sc = (S.esatte + S.aiuto * .5) / n;
   recordSession({ sezione: mode, totale: n, esatte: S.esatte, conAiuto: S.aiuto, errate: S.errate });
-  const msg = sc >= .9 ? 'Sei stata fantastica! Una vera campionessa dei numeri! 🏆'
-    : sc >= .7 ? 'Bravissima! Hai lavorato benissimo, continua così! 🌟'
-    : sc >= .5 ? 'Brava! Stai facendo grandi progressi: ancora un po’ di allenamento e sarai fortissima! 💪'
-    : 'Non ti preoccupare, sbagliando si impara! Riprova, sono sicura che andrà meglio! 🌈';
+  const lv = sc >= .7 ? 0 : sc >= .4 ? 1 : 2; // 70% e oltre / dal 40% al 70% / sotto il 40%
+  const msg = ['Ottimo lavoro! Sei una vera campionessa dei numeri! 🏆', 'Ci siamo quasi! Ancora un piccolo sforzo e sarai perfetta! 💪', 'Puoi fare meglio! Riprova, sono sicura che andrà meglio! 🌈'][lv];
+  speak(['Ottimo lavoro!', 'Ci siamo quasi!', 'Puoi fare meglio!'][lv]);
   $('#app').innerHTML = `<h1>${mode === 'mix' ? 'Mix finito!' : 'Sezione finita!'}</h1><div class="card sum">
   <div class="dots">${S.res.map(r => `<span class="dot ${r}">${r === 'esatta' ? '✓' : r === 'aiuto' ? '💡' : '✗'}</span>`).join('')}</div>
   <div class="tot"><div><b class="g">${S.esatte}</b>esatte</div><div><b class="y">${S.aiuto}</b>con aiuto</div><div><b class="r">${S.errate}</b>sbagliate</div></div>
