@@ -1,0 +1,11 @@
+{
+  "esercizi": [
+    { "tipo": "serie", "numeri": [10, 15, null, 25, null, 35] },
+    { "tipo": "serie", "numeri": [60, null, 50, 45, null], "titolo": "Torna indietro di 5 in 5" },
+    { "tipo": "salti", "partenza": 34, "operazioni": [5, -3, 10] },
+    { "tipo": "confronto", "a": 45, "b": 54 },
+    { "tipo": "prima_dopo", "numero": 47, "chiedi": "entrambi" },
+    { "tipo": "abaco", "numero": 37, "modalita": "leggi" },
+    { "tipo": "abaco", "numero": 62, "modalita": "costruisci" }
+  ]
+}
