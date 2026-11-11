@@ -3,13 +3,14 @@
 //  kind 'cmp'   -> a, b          kind 'pick'  -> nums, ask ('min'|'max')
 //  kind 'order' -> nums, dir ('cresc'|'decr')          kind 'build' -> v (numero da costruire sull'abaco)
 const MODES = {
-  serie: { c: '#ff6fae', icon: '🔢', name: 'Serie di numeri' },
-  salti: { c: '#1fb5a3', icon: '➕', name: 'Più e meno' },
-  conf:  { c: '#f5b82e', icon: '⚖️', name: 'Quale segno?' },
-  pd:    { c: '#9b6bd6', icon: '↔️', name: 'Prima e dopo' },
-  ord:   { c: '#5db7f0', icon: '📶', name: 'Metti in ordine' },
-  mm:    { c: '#e8456b', icon: '🎯', name: 'Il più piccolo e il più grande' },
-  abaco: { c: '#4fb477', icon: '🧮', name: 'L’abaco' }
+  serie: { c: '240,140,184', icon: '🔢', name: 'Serie di numeri' },
+  salti: { c: '43,181,160', icon: '➕', name: 'Più e meno' },
+  conf:  { c: '243,194,91', icon: '⚖️', name: 'Quale segno?' },
+  pd:    { c: '169,139,230', icon: '↔️', name: 'Prima e dopo' },
+  ord:   { c: '110,185,235', icon: '📶', name: 'Metti in ordine' },
+  mm:    { c: '236,95,127', icon: '🎯', name: 'Il più piccolo e il più grande' },
+  col:   { c: '255,160,130', icon: '🧩', name: 'Calcoli in colonna' },
+  abaco: { c: '102,190,140', icon: '🧮', name: 'L’abaco' }
 };
 const inR = n => Number.isInteger(n) && n >= 0 && n <= 100;
 
@@ -22,6 +23,14 @@ function mkFill(mode, title, values, hidden, deltas, extra) {
 // Prima e dopo: l'esercizio chiede SEMPRE il numero precedente e il successivo
 const pdModel = x => mkFill('pd', `Quali numeri stanno accanto al ${x}?`, [x - 1, x, x + 1], [0, 2], [-1, 1]);
 const abLeggi = v => mkFill('abaco', 'Che numero è rappresentato sull’abaco?', [v], [0], [], { abaco: v });
+// Calcolo in colonna: le risposte si danno da destra a sinistra (unità, [riporto/cambio = 1], decine, [centinaia])
+function colModel(op, a, b) {
+  const r = op === '+' ? a + b : a - b, au = a % 10, bu = b % 10;
+  const carry = op === '+' ? au + bu >= 10 : au < bu;
+  const ans = [r % 10]; if (carry) ans.push(1); if (r >= 10) ans.push(Math.floor(r / 10) % 10); if (r >= 100) ans.push(1);
+  return { kind: 'fill', mode: 'col', title: op === '+' ? 'Addizione in colonna' : 'Sottrazione in colonna', cells: [], deltas: [],
+    col: { op, a, b, r, ncols: (a >= 100 || b >= 100 || r >= 100) ? 3 : 2, carry }, ans };
+}
 const distinct = n => Array.isArray(n) && new Set(n).size === n.length && n.every(inR);
 
 // Converte una voce del file in un esercizio; lancia Error con messaggio in italiano se non valida
@@ -56,6 +65,14 @@ function parseOne(e) {
     if (!Number.isInteger(e.numero) || e.numero < 1 || e.numero > 99) throw new Error('"numero" deve essere intero da 1 a 99');
     return pdModel(e.numero);
   }
+  if (t === 'colonna') {
+    const op = { '+': '+', '-': '-', '−': '-' }[e.operazione];
+    if (!op) throw new Error('"operazione" deve essere + oppure -');
+    if (!inR(e.a) || !inR(e.b)) throw new Error('"a" e "b" devono essere interi da 0 a 100');
+    const r = op === '+' ? e.a + e.b : e.a - e.b;
+    if (!inR(r)) throw new Error('il risultato deve stare tra 0 e 100');
+    return colModel(op, e.a, e.b);
+  }
   if (t === 'ordina') {
     if (!distinct(e.numeri) || e.numeri.length < 3 || e.numeri.length > 6) throw new Error('"numeri": da 3 a 6 interi diversi da 0 a 100');
     if (!['crescente', 'decrescente'].includes(e.ordine)) throw new Error('"ordine" deve essere crescente o decrescente');
@@ -72,7 +89,7 @@ function parseOne(e) {
     if (e.modalita && e.modalita !== 'leggi') throw new Error('"modalita" deve essere leggi o costruisci');
     return abLeggi(e.numero);
   }
-  throw new Error('"tipo" sconosciuto (serie, salti, confronto, prima_dopo, ordina, minmax, abaco)');
+  throw new Error('"tipo" sconosciuto (serie, salti, confronto, prima_dopo, ordina, minmax, colonna, abaco)');
 }
 
 // ---- Soluzioni proposte dal pulsante Aiuto (1 giusta + 2 sbagliate, mescolate) ----
@@ -98,4 +115,9 @@ function buildOptions(v) {
   const d = Math.floor(v / 10), u = v % 10, ok = p => p[0] >= 0 && p[0] <= 9 && p[1] >= 0 && p[1] <= 9 ? p : null;
   const ds = pickDistractors([[u, d], [d + 1, u], [d - 1, u], [d, u + 1], [d, u - 1]].map(ok), JSON.stringify([d, u]), () => [R(0, 9), R(0, 9)]);
   return shuffle([{ d, u, ok: true }, ...ds.map(p => ({ d: p[0], u: p[1], ok: false }))]);
+}
+function colOptions(r) {
+  const sw = r >= 10 && r < 100 ? (r % 10) * 10 + Math.floor(r / 10) : null, ok = x => x >= 0 && x <= 100 && x !== r ? x : null;
+  const ds = pickDistractors([r + 1, r - 1, r + 10, r - 10, sw].map(x => x === null ? null : ok(x)), JSON.stringify(r), () => ok(R(0, 100)) ?? ok(R(0, 100)));
+  return shuffle([{ v: r, ok: true }, ...ds.map(v => ({ v, ok: false }))]);
 }

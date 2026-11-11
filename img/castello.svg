@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 320">
+  <path d="M0 320V266Q150 226 300 262T600 248V320Z" fill="#e2cff5" fill-opacity=".55"/>
+  <path d="M0 320V292Q170 262 330 288T600 280V320Z" fill="#f7cfe6" fill-opacity=".5"/>
+  <g fill="#d4c0f2" fill-opacity=".5">
+    <rect x="262" y="178" width="76" height="112"/><rect x="202" y="208" width="44" height="82"/><rect x="354" y="208" width="44" height="82"/>
+    <rect x="150" y="236" width="34" height="54"/><rect x="416" y="236" width="34" height="54"/><rect x="244" y="252" width="112" height="38"/>
+  </g>
+  <g fill="#f4b4d6" fill-opacity=".6">
+    <polygon points="252,178 300,112 348,178"/><polygon points="194,208 224,160 254,208"/><polygon points="346,208 376,160 406,208"/>
+    <polygon points="143,236 167,200 191,236"/><polygon points="409,236 433,200 457,236"/>
+    <path d="M300 112V90l18 7-18 7z"/><path d="M224 160V142l14 5-14 5z"/><path d="M376 160V142l14 5-14 5z"/>
+  </g>
+  <g fill="#ffffff" fill-opacity=".7">
+    <path d="M290 214a10 10 0 0 1 20 0v14h-20z"/><path d="M216 238a8 8 0 0 1 16 0v12h-16z"/><path d="M368 238a8 8 0 0 1 16 0v12h-16z"/>
+    <path d="M288 262a12 12 0 0 1 24 0v28h-24z"/><rect x="159" y="258" width="8" height="12" rx="4"/><rect x="425" y="258" width="8" height="12" rx="4"/>
+  </g>
+</svg>

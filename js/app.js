@@ -1,7 +1,6 @@
 // Flusso dell'app: menu, sezioni da 10 esercizi, aiuto, riepilogo
-const CFG = { perSezione: 10, mixPerFunzione: 5 }; // modificabili
 let stars = 0, mode = null, S = null, q = null, cur = 0, buf = '', tries = 0, errs = 0, helped = false, locked = false, t0 = 0,
-  abN = 0, abU = 0, hp = null, placed = [], bank = [], updatePending = false, installEvt = null;
+  abN = 0, abU = 0, hp = null, placed = [], bank = [], updatePending = false, installEvt = null, statView = 'sempre';
 
 const PRAISE = ['Bravissima! 🎉', 'Perfetta! ⭐', 'Sei una campionessa! 🏆', 'Che brava! 👏', 'Ottimo lavoro! 🌟'];
 const HELPED = ['Brava, ce l’hai fatta! 💪', 'Ben fatto! La prossima volta ci riesci da sola! 🌈'];
@@ -19,7 +18,8 @@ async function init() {
 function home(report) {
   if (updatePending) return location.reload(); // nuova versione pronta
   mode = null; S = null;
-  $('#app').innerHTML = `<div class="hdr"><div class="hbtns"><button class="ic" onclick="statsScreen()" aria-label="Statistiche" title="Statistiche">📊</button><button class="ic" id="mbtn" onclick="toggleMenu()" aria-label="Menu" title="Menu">⋮</button></div>
+  $('#app').innerHTML = `<div class="hdr"><h1><span>👑</span> <span class="g">Matematica in gioco</span></h1>
+  <div class="hbtns"><button class="ic" onclick="statsScreen()" aria-label="Statistiche" title="Statistiche">📊</button><button class="ic" id="mbtn" onclick="toggleMenu()" aria-label="Menu" title="Menu">⋮</button></div>
   <div class="dd" id="dd" hidden>
     <button onclick="menuAct('imp')">⬆ Importa esercizi</button>
     <button onclick="menuAct('exp')">📊 Esporta statistiche</button>
@@ -27,9 +27,10 @@ function home(report) {
     ${DB_IMPORTED ? '<button onclick="menuAct(\'reset\')">↩ Ripristina esercizi originali</button>' : ''}
     <div class="ddinfo">Esercizi in uso: ${DB.length}${DB_IMPORTED ? ' (importati)' : ''}<br>Versione ${APP_VERSION}<br>Autore: Luigi Antonucci</div>
   </div></div>
-  <h1><span>👑</span> <span class="g">Matematica in gioco</span> <span>✨</span></h1><p class="sub">Scegli un gioco! Ogni sezione ha ${CFG.perSezione} esercizi</p>
-  <div class="menu">${Object.entries(MODES).map(([k, m]) => `<button style="--c:${m.c}" onclick="start('${k}')" ${pool(k).length ? '' : 'disabled'}><span>${m.icon}</span>${m.name}</button>`).join('')}
-  <button class="mix" onclick="start('mix')"><span>🎲</span>Mix di tutto (${CFG.mixPerFunzione} per gioco)</button></div>
+  <p class="sub">Scegli come giocare ✨</p>
+  <button class="main" onclick="start('mix')"><span class="mt">🎲 Mix di tutto</span><span class="ms">${CFG.mixPerFunzione} esercizi per ogni gioco, tutti mescolati</span></button>
+  <div class="sec">Approfondisci un gioco · ${CFG.perSezione} esercizi</div>
+  <div class="menu">${Object.entries(MODES).map(([k, m]) => `<button style="--c:rgb(${m.c})" onclick="start('${k}')" ${pool(k).length ? '' : 'disabled'}><i>${m.icon}</i>${m.name}</button>`).join('')}</div>
   <div class="report" id="rep"></div>`;
   if (report) {
     const r = $('#rep'), errors = report.errors || [];
@@ -48,22 +49,45 @@ function menuAct(a) {
   else if (a === 'reset') resetDB().then(() => home({ msg: 'Esercizi originali (data/db.json) ripristinati.' }));
 }
 
-// ---- Schermata statistiche ----
+// ---- Schermata statistiche (da sempre / ultimi 30 giorni) ----
+function setStatView(v) { statView = v; statsScreen(); }
 function statsScreen() {
   mode = 'stats';
-  const t = STATS.totale, pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '–';
+  const month = statView === 'mese', M = month ? monthStats() : null;
+  const t = month ? M.totale : STATS.totale, per = k => (month ? M.perTipo : STATS.perTipo)[k] || zero();
+  const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '–';
   const name = k => k === 'mix' ? '🎲 Mix' : MODES[k] ? `${MODES[k].icon} ${MODES[k].name}` : k;
-  const rows = Object.entries(MODES).map(([k, m]) => { const s = STATS.perTipo[k] || zero();
-    return `<tr><td>${m.icon} ${m.name}</td><td>${s.svolti}</td><td>${pct(s.esatte, s.svolti)}</td><td>${s.erroriTotali}</td><td>${s.maxConsecutiveEsatte}</td></tr>`; }).join('');
-  const sess = STATS.sessioni.slice(-8).reverse().map(s => `<div class="sess"><span>${name(s.sezione)}<br><small>${new Date(s.data).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</small></span><span>${s.esatte} ✓ · ${s.conAiuto} 💡 · ${s.errate} ✗<br><small>su ${s.totale}</small></span></div>`).join('');
+  const rows = Object.entries(MODES).map(([k, m]) => { const x = per(k);
+    return `<tr><td>${m.icon} ${m.name}</td><td>${x.svolti}</td><td>${pct(x.esatte, x.svolti)}</td><td>${x.erroriTotali}</td><td>${x.maxConsecutiveEsatte}</td></tr>`; }).join('');
+  const from = daysAgo(29); from.setHours(0, 0, 0, 0);
+  const sess = STATS.sessioni.filter(x => !month || new Date(x.data) >= from).slice(-8).reverse().map(x => `<div class="sess"><span>${name(x.sezione)}<br><small>${new Date(x.data).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</small></span><span>${x.esatte} ✓ · ${x.conAiuto} 💡 · ${x.errate} ✗<br><small>su ${x.totale}</small></span></div>`).join('');
+  const last = month ? `<div><b>${M.giorni}</b>giorni di gioco</div>` : `<div><b>${t.consecutiveEsatte}</b>esatte di fila ora</div>`;
   $('#app').innerHTML = `<div class="top"><button onclick="home()">← Menu</button><h2 class="ttl">📊 Statistiche</h2><span style="width:70px"></span></div>
+  <div class="seg"><button class="${month ? '' : 'on'}" onclick="setStatView('sempre')">Da sempre</button><button class="${month ? 'on' : ''}" onclick="setStatView('mese')">Ultimi 30 giorni</button></div>
   ${t.svolti ? `<div class="card"><div class="grid3">
-    <div><b>${t.svolti}</b>esercizi svolti</div><div><b>${pct(t.esatte, t.svolti)}</b>esatte</div><div><b>${t.maxConsecutiveEsatte}</b>record di fila</div>
+    <div><b>${t.svolti}</b>esercizi svolti</div><div><b>${pct(t.esatte, t.svolti)}</b>esatte</div><div><b>${t.maxConsecutiveEsatte}</b>${month ? 'miglior serie' : 'record di fila'}</div>
     <div><b>${t.esatte}</b>esatte</div><div><b>${t.conAiuto}</b>con aiuto</div><div><b>${t.errate}</b>sbagliate</div>
-    <div><b>${t.erroriTotali}</b>errori totali</div><div><b>${Math.round(t.tempoTotaleSec / t.svolti)}s</b>tempo medio</div><div><b>${t.consecutiveEsatte}</b>esatte di fila ora</div></div></div>
+    <div><b>${t.erroriTotali}</b>errori totali</div><div><b>${Math.round(t.tempoTotaleSec / t.svolti)}s</b>tempo medio</div>${last}</div></div>
   <div class="card"><h3>Per gioco</h3><div style="overflow-x:auto"><table class="tbl"><tr><th>Gioco</th><th>Svolti</th><th>Esatte</th><th>Errori</th><th>Record</th></tr>${rows}</table></div></div>
   ${sess ? `<div class="card"><h3>Ultime sezioni</h3>${sess}</div>` : ''}`
-  : '<div class="card"><p class="q">Ancora nessun esercizio svolto. Gioca una sezione e qui vedrai i risultati! ⭐</p></div>'}`;
+  : `<div class="card"><p class="q">${month ? 'Negli ultimi 30 giorni non ci sono ancora esercizi svolti.' : 'Ancora nessun esercizio svolto.'} Gioca una sezione e qui vedrai i risultati! ⭐</p></div>`}
+  <div class="rst"><button onclick="askReset()">🔒 Azzera statistiche</button></div>`;
+}
+// Azzeramento protetto da password (la password si imposta in js/config.js)
+function askReset() {
+  const m = document.createElement('div'); m.className = 'modal'; m.id = 'modal';
+  m.innerHTML = `<div class="mbox"><h3>🔒 Azzera statistiche</h3><p class="sub small" style="text-align:left">Cancella tutti i risultati salvati su questo dispositivo, anche quelli del mese. Inserisci la password per continuare.</p>
+  <input type="password" id="pw" autocomplete="off" placeholder="Password"><div class="msg" id="pmsg" style="min-height:26px;font-size:.95rem"></div>
+  <div class="mbtns"><button onclick="closeModal()">Annulla</button><button class="danger" onclick="doReset()">Azzera</button></div></div>`;
+  document.body.appendChild(m);
+  const i = $('#pw'); i.focus(); i.addEventListener('keydown', e => { if (e.key === 'Enter') doReset(); });
+}
+function closeModal() { const m = $('#modal'); if (m) m.remove(); }
+async function doReset() {
+  const ok = await checkPassword($('#pw').value), p = $('#pmsg');
+  if (ok === null) { p.textContent = 'Serve una connessione sicura (https) per verificare la password.'; p.className = 'msg no'; }
+  else if (!ok) { p.textContent = 'Password errata'; p.className = 'msg no'; $('#pw').select(); }
+  else { resetStats(); closeModal(); statsScreen(); }
 }
 
 $('#file').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) importFile(f, home); });
@@ -81,7 +105,7 @@ function show() {
   q = JSON.parse(JSON.stringify(S.list[S.i]));
   const hb = '<button class="help-btn" id="hb" onclick="askHelp()">💡 Aiuto</button>', ms = '<div class="msg" id="msg"></div><div id="help"></div>';
   if (q.kind === 'fill') {
-    shell(`<p class="q">${q.title}</p>${q.abaco !== undefined ? abSVG(Math.floor(q.abaco / 10), q.abaco % 10) : ''}<div class="row">${cellsHTML(q)}</div>${ms}${hb}${padHTML()}`);
+    shell(`<p class="q">${q.title}</p>${q.abaco !== undefined ? abSVG(Math.floor(q.abaco / 10), q.abaco % 10) : ''}${q.col ? colHTML(q) : `<div class="row">${cellsHTML(q)}</div>`}${ms}${hb}${padHTML()}`);
     hl();
   } else if (q.kind === 'cmp') {
     shell(`<p class="q">Quale segno va tra i due numeri?</p><div class="row"><div class="n">${q.a}</div><div class="slot" style="min-width:48px">?</div><div class="n">${q.b}</div></div>
@@ -119,10 +143,10 @@ function finish(esito) {
 const solved = () => finish(helped ? 'aiuto' : 'esatta');
 
 // ---- Esercizi con caselle da riempire (serie, salti, prima/dopo, abaco "leggi") ----
-function hl() { document.querySelectorAll('.slot').forEach((s, i) => s.classList.toggle('act', i === cur && !s.classList.contains('done'))); }
+function hl() { document.querySelectorAll('.slot').forEach(s => s.classList.toggle('act', s.id === 's' + cur && !s.classList.contains('done'))); }
 function key(k) {
   if (locked) return;
-  if (k === 'x') buf = buf.slice(0, -1); else if (buf.length < 3) buf += k;
+  if (k === 'x') buf = buf.slice(0, -1); else if (buf.length < (q.col ? 1 : 3)) buf += k;
   const s = $('#s' + cur); if (s) s.textContent = buf;
 }
 function revealFrom(k) { for (let i = k; i < q.ans.length; i++) { const s = $('#s' + i); s.textContent = q.ans[i]; s.classList.add('done'); } }
@@ -212,7 +236,9 @@ function hideSomeWrong(prefix, n, rightIdx, keepOne) {
 function askHelp() {
   if (locked || helped) return;
   helped = true; $('#hb').disabled = true;
-  if (q.kind === 'fill') {
+  if (q.col) {
+    showHelp(colOptions(q.col.r).map(o => ({ label: o.v, ok: o.ok })), () => { revealFrom(cur); finish('aiuto'); });
+  } else if (q.kind === 'fill') {
     showHelp(fillOptions(q.ans.slice(cur)).map(o => ({ label: o.v.join(' · '), ok: o.ok })), () => { revealFrom(cur); finish('aiuto'); });
   } else if (q.kind === 'order') {
     showHelp(orderOptions(ordTarget(q.dir)).map(o => ({ label: o.v.join(' · '), ok: o.ok })), () => { ordFill(ordTarget(q.dir)); finish('aiuto'); });

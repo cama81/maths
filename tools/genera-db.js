@@ -25,6 +25,8 @@ many(40, () => { // confronto
 many(40, () => ({ tipo: 'prima_dopo', numero: R(2, 99) }));
 many(30, () => ({ tipo: 'ordina', numeri: distinctNums(pick([4, 4, 5])), ordine: pick(['crescente', 'decrescente']) }));
 many(30, () => ({ tipo: 'minmax', numeri: distinctNums(pick([3, 4, 5])), chiedi: pick(['minore', 'maggiore']) }));
+many(25, () => { const a = R(10, 90), b = R(1, 100 - a); return { tipo: 'colonna', operazione: '+', a, b }; });
+many(25, () => { const a = R(11, 99), b = R(1, a); return { tipo: 'colonna', operazione: '-', a, b }; });
 many(20, () => ({ tipo: 'abaco', numero: R(1, 99), modalita: 'leggi' }));
 many(20, () => ({ tipo: 'abaco', numero: R(1, 99), modalita: 'costruisci' }));
 

@@ -10,6 +10,21 @@ function cellsHTML(m) {
     return (i > 0 && m.deltas[i - 1] ? hopHTML(m.deltas[i - 1]) : '') + box;
   }).join('');
 }
+// Calcolo in colonna: intestazione h/da/u, riporto/cambio, due numeri, riga, risultato (le caselle hanno id s0, s1... nell'ordine delle risposte)
+function colHTML(m) {
+  const { op, a, b, r, ncols, carry } = m.col, nc = ncols + 1;
+  const ids = { u: 0 }; let k = 1; if (carry) ids.c = k++; ids.t = k++; ids.h = k++;
+  const cc = (t, cls = '') => `<div class="cc ${cls}">${t}</div>`, sl = (i, cls = '') => `<div class="cc"><div class="slot ${cls}" id="s${i}"></div></div>`;
+  const place = j => ncols - 1 - j === 0 ? 'u' : ncols - 1 - j === 1 ? 't' : 'h'; // colonna j (0 = a sinistra)
+  const digits = n => String(n).padStart(ncols, ' ').split('').map(c => c === ' ' ? '' : c);
+  const head = cc('') + ['h', 'da', 'u'].slice(3 - ncols).map(t => cc(t, 'hd')).join('');
+  const carryRow = carry ? cc(op === '+' ? 'riporto' : 'cambio', 'lab') + [...Array(ncols)].map((_, j) => place(j) === 't' ? sl(ids.c, 'sm') : cc('')).join('') : '';
+  const num = (n, sign) => cc(sign, 'op') + digits(n).map((d, j) => cc(d, place(j))).join('');
+  const res = cc('') + [...Array(ncols)].map((_, j) => { const p = place(j);
+    return p === 'u' ? sl(0) : p === 't' ? (r >= 10 ? sl(ids.t) : cc('')) : (r >= 100 ? sl(ids.h) : cc('')); }).join('');
+  return `<div class="col" style="grid-template-columns:repeat(${nc},auto)">${head}${carryRow}${num(a, '')}${num(b, op === '+' ? '+' : '−')}<div class="cline"></div>${res}</div>
+  <p class="sub small">Comincia dalle unità, poi vai a sinistra!</p>`;
+}
 function abSVG(d, u) {
   const rod = (x, n, col, l) => {
     let s = `<line x1="${x}" y1="20" x2="${x}" y2="250" stroke="#d9a441" stroke-width="6" stroke-linecap="round"/>`;
@@ -25,3 +40,4 @@ function shell(inner) {
   const n = S ? S.list.length : 0, i = S ? S.i : 0;
   $('#app').innerHTML = `<div class="top"><button onclick="home()">← Menu</button><div class="prog">${i + 1} / ${n}</div><div class="stars">⭐ ${stars}</div></div><div class="bar"><i style="width:${n ? i / n * 100 : 0}%"></i></div><div class="card">${inner}</div>`;
 }
+
