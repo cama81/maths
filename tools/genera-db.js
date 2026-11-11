@@ -27,6 +27,13 @@ many(30, () => ({ tipo: 'ordina', numeri: distinctNums(pick([4, 4, 5])), ordine:
 many(30, () => ({ tipo: 'minmax', numeri: distinctNums(pick([3, 4, 5])), chiedi: pick(['minore', 'maggiore']) }));
 many(25, () => { const a = R(10, 90), b = R(1, 100 - a); return { tipo: 'colonna', operazione: '+', a, b }; });
 many(25, () => { const a = R(11, 99), b = R(1, a); return { tipo: 'colonna', operazione: '-', a, b }; });
+many(20, () => { const a = R(10, 79), b = pick([R(1, 9), 10 * R(1, Math.floor((100 - a) / 10) || 1)]); return a + b <= 100 ? { tipo: 'colonna', livello: 'facile', operazione: '+', a, b } : { tipo: 'colonna', livello: 'facile', operazione: '+', a, b: R(1, 9) }; });
+many(20, () => { const a = R(21, 99), b = pick([R(1, 9), 10 * R(1, Math.floor(a / 10))]); return { tipo: 'colonna', livello: 'facile', operazione: '-', a, b }; });
+many(30, () => { // numero mancante: totale e 3-4 addendi, uno nascosto
+  const tot = R(20, 100), k = pick([3, 3, 4]); let parts = [];
+  for (let g = 0; g < 100; g++) { const cuts = new Set(); while (cuts.size < k - 1) cuts.add(R(1, tot - 1)); const c = [0, ...[...cuts].sort((x, y) => x - y), tot]; parts = c.slice(1).map((v, i) => v - c[i]); if (parts.every(p => p > 0)) break; }
+  const h = R(0, parts.length - 1); return { tipo: 'mancante', totale: tot, numeri: parts.map((p, i) => i === h ? null : p) };
+});
 many(20, () => ({ tipo: 'abaco', numero: R(1, 99), modalita: 'leggi' }));
 many(20, () => ({ tipo: 'abaco', numero: R(1, 99), modalita: 'costruisci' }));
 

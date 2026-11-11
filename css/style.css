@@ -58,6 +58,8 @@ button.slot{background:transparent;color:var(--ink);font-family:inherit;cursor:p
 .hop.up{color:var(--up)}.hop.down{color:var(--dn)}
 .hop.up path,.hop.down path{stroke:currentColor}
 .hop polygon,.hop text{fill:currentColor}
+.eq .op{font-size:1.6rem;font-weight:700;color:var(--b);padding:0 6px}
+.n.tg{background:linear-gradient(135deg,var(--gold),var(--b))}
 /* calcoli in colonna */
 .col{display:grid;justify-content:center;align-items:center;margin:8px auto;width:max-content;max-width:100%}
 .cc{height:52px;min-width:52px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:700}

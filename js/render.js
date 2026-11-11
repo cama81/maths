@@ -25,6 +25,11 @@ function colHTML(m) {
   return `<div class="col" style="grid-template-columns:repeat(${nc},auto)">${head}${carryRow}${num(a, '')}${num(b, op === '+' ? '+' : '−')}<div class="cline"></div>${res}</div>
   <p class="sub small">Comincia dalle unità, poi vai a sinistra!</p>`;
 }
+// Numero mancante: 20 + [ ] + 5 = 75
+function missHTML(m) {
+  const items = m.cells.map(v => v === null ? '<div class="slot" id="s0"></div>' : `<div class="n">${v}</div>`).join('<div class="op">+</div>');
+  return `<div class="row eq">${items}<div class="op">=</div><div class="n tg">${m.miss.total}</div></div>`;
+}
 function abSVG(d, u) {
   const rod = (x, n, col, l) => {
     let s = `<line x1="${x}" y1="20" x2="${x}" y2="250" stroke="#d9a441" stroke-width="6" stroke-linecap="round"/>`;

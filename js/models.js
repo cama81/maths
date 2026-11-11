@@ -9,7 +9,9 @@ const MODES = {
   pd:    { c: '169,139,230', icon: '↔️', name: 'Prima e dopo' },
   ord:   { c: '110,185,235', icon: '📶', name: 'Metti in ordine' },
   mm:    { c: '236,95,127', icon: '🎯', name: 'Il più piccolo e il più grande' },
+  colf:  { c: '255,190,130', icon: '🪜', name: 'Colonna facile' },
   col:   { c: '255,160,130', icon: '🧩', name: 'Calcoli in colonna' },
+  man:   { c: '130,190,230', icon: '🔍', name: 'Il numero mancante' },
   abaco: { c: '102,190,140', icon: '🧮', name: 'L’abaco' }
 };
 const inR = n => Number.isInteger(n) && n >= 0 && n <= 100;
@@ -71,7 +73,20 @@ function parseOne(e) {
     if (!inR(e.a) || !inR(e.b)) throw new Error('"a" e "b" devono essere interi da 0 a 100');
     const r = op === '+' ? e.a + e.b : e.a - e.b;
     if (!inR(r)) throw new Error('il risultato deve stare tra 0 e 100');
-    return colModel(op, e.a, e.b);
+    const liv = e.livello || 'standard';
+    if (!['standard', 'facile'].includes(liv)) throw new Error('"livello" deve essere standard o facile');
+    if (liv === 'facile' && !(e.b > 0 && (e.b < 10 || e.b % 10 === 0))) throw new Error('livello facile: "b" deve essere una cifra (1–9) oppure una decina (10, 20, 30…)');
+    const c = colModel(op, e.a, e.b);
+    if (liv === 'facile') c.mode = 'colf';
+    return c;
+  }
+  if (t === 'mancante') {
+    const n = e.numeri;
+    if (!inR(e.totale) || !Array.isArray(n) || n.length < 3 || n.length > 5) throw new Error('servono "totale" e da 3 a 5 "numeri" (con un solo null)');
+    if (n.filter(x => x === null).length !== 1 || n.some(x => x !== null && !inR(x))) throw new Error('"numeri" deve contenere un solo null e il resto interi da 0 a 100');
+    const miss = e.totale - n.reduce((s, x) => s + (x === null ? 0 : x), 0);
+    if (!inR(miss)) throw new Error('il numero mancante verrebbe fuori da 0–100: controlla il totale');
+    return { kind: 'fill', mode: 'man', title: `Quale numero manca per arrivare a ${e.totale}?`, cells: n, deltas: [], miss: { total: e.totale }, ans: [miss] };
   }
   if (t === 'ordina') {
     if (!distinct(e.numeri) || e.numeri.length < 3 || e.numeri.length > 6) throw new Error('"numeri": da 3 a 6 interi diversi da 0 a 100');
@@ -89,7 +104,7 @@ function parseOne(e) {
     if (e.modalita && e.modalita !== 'leggi') throw new Error('"modalita" deve essere leggi o costruisci');
     return abLeggi(e.numero);
   }
-  throw new Error('"tipo" sconosciuto (serie, salti, confronto, prima_dopo, ordina, minmax, colonna, abaco)');
+  throw new Error('"tipo" sconosciuto (serie, salti, confronto, prima_dopo, ordina, minmax, colonna, mancante, abaco)');
 }
 
 // ---- Soluzioni proposte dal pulsante Aiuto (1 giusta + 2 sbagliate, mescolate) ----
