@@ -1,4 +1,4 @@
-# Matematica in gioco – 2ª elementare (v1.9.0)
+# Matematica in gioco – 2ª elementare (v1.10.0)
 
 Va pubblicata su un sito (GitHub Pages) o aperta con un server locale (`python3 -m http.server`), perché legge `data/db.json`.
 
@@ -36,6 +36,7 @@ Salvate nel browser del dispositivo (un sito statico non può scrivere nel repos
 Per ogni esercizio si registra: esito (esatta senza aiuto / con aiuto / sbagliata), tentativi sbagliati, tempo (solo per le esatte conta nella media, massimo 2 minuti a esercizio) e il testo dell'esercizio se sbagliato o fatto con aiuto.
 Schermata: quadro generale (svolti, % esatte, % con aiuto, % sbagliate, errori per esercizio, tempo per risposta esatta, giorni e minuti di gioco, record di fila) con freccette di miglioramento; frasi di sintesi; grafici dell'andamento (esatte, aiuto, tempo); tabella per gioco con trend, e toccando un gioco si vede il dettaglio dello stesso gioco; elenco "Da rivedere"; ultime sezioni.
 I dati giornalieri (per l'andamento e i confronti) si registrano dalla v1.5 e si conservano per 2 anni; i totali "dall'inizio" comprendono anche i dati precedenti. ⋮ → "Esporta statistiche" scarica `statistiche.json` con tutto (anche i giorni e l'elenco degli errori).
+**Più dispositivi:** ogni dispositivo ha le sue statistiche. Con ⋮ → "Esporta statistiche" si scarica un file; con ⋮ → "Importa statistiche" su un altro dispositivo i dati vengono sommati (giorno per giorno e gioco per gioco). L'importazione si può ripetere ogni mese: per ogni dispositivo si tiene solo l'istantanea più recente, quindi non si contano mai due volte gli stessi esercizi, e importare un file con i dati del dispositivo stesso non cambia nulla. Il file esportato contiene anche i dati già importati, quindi basta scambiarsi un file per riunire tutto. Non è una sincronizzazione automatica. Vengono accettati anche i file esportati dalle versioni precedenti.
 In fondo alla pagina, a destra, "Azzera statistiche" chiede una password. Password iniziale: **Matematica2**. Per cambiarla: `node tools/hash-password.js NUOVA` e incolla il risultato in `resetPasswordHash` di `js/config.js`. In un sito statico è una protezione "da bambino", non sicurezza vera. Richiede https (GitHub Pages lo è).
 
 ## Aggiornamenti dell'app installata

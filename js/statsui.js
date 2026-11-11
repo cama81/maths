@@ -105,6 +105,7 @@ function statsScreen() {
   <div class="card"><h3>Per gioco <small>tocca una riga per il dettaglio</small></h3><div style="overflow-x:auto"><table class="tbl"><tr><th>Gioco</th><th>Svolti</th><th>Esatte</th><th>Aiuto</th><th>Tempo</th><th>Trend 30 gg</th></tr>${tbl}</table></div></div>
   ${rev ? `<div class="card"><h3>Da rivedere <small>ultimi esercizi sbagliati o con aiuto</small></h3>${rev}</div>` : ''}
   ${sess ? `<div class="card"><h3>Ultime sezioni</h3>${sess}</div>` : ''}
+  ${Object.keys(IMPORTS).length ? `<p class="note">📥 Le statistiche comprendono i dati di ${Object.keys(IMPORTS).length} altro/i dispositivo/i importati (ultimo aggiornamento importato: ${fmtD(Object.values(IMPORTS).map(x => x.dati.aggiornato).sort().pop())}).</p>` : ''}
   <p class="note">Esatte = giuste senza aiuto. Il tempo conta solo le risposte esatte (al massimo 2 minuti a esercizio) e cambia molto da un gioco all’altro: per valutare i progressi confronta lo stesso gioco nel tempo. L’andamento nel tempo si registra dalla versione 1.5.</p>`
   : `<div class="card"><p class="q">${month ? 'Negli ultimi 30 giorni non ci sono ancora esercizi svolti.' : 'Ancora nessun esercizio svolto.'} Gioca una sezione e qui vedrai i risultati! ⭐</p></div>
   <div class="card"><h3>Per gioco</h3><div style="overflow-x:auto"><table class="tbl"><tr><th>Gioco</th><th>Svolti</th><th>Esatte</th><th>Aiuto</th><th>Tempo</th><th>Trend 30 gg</th></tr>${tbl}</table></div></div>`}
@@ -114,7 +115,7 @@ function statsScreen() {
 // Azzeramento protetto da password (la password si imposta in js/config.js)
 function askReset() {
   const m = document.createElement('div'); m.className = 'modal'; m.id = 'modal';
-  m.innerHTML = `<div class="mbox"><h3>🔒 Azzera statistiche</h3><p class="sub small" style="text-align:left">Cancella tutti i risultati salvati su questo dispositivo, anche quelli del mese. Inserisci la password per continuare.</p>
+  m.innerHTML = `<div class="mbox"><h3>🔒 Azzera statistiche</h3><p class="sub small" style="text-align:left">Cancella tutti i risultati salvati su questo dispositivo, anche quelli del mese e quelli importati da altri dispositivi. Inserisci la password per continuare.</p>
   <input type="password" id="pw" autocomplete="off" placeholder="Password"><div class="msg" id="pmsg" style="min-height:26px;font-size:.95rem"></div>
   <div class="mbtns"><button onclick="closeModal()">Annulla</button><button class="danger" onclick="doReset()">Azzera</button></div></div>`;
   document.body.appendChild(m);

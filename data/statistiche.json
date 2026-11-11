@@ -1,8 +1,11 @@
 {
-  "versione": 1,
+  "versione": 3,
+  "id": null,
   "creato": null,
   "aggiornato": null,
-  "totale": { "svolti": 0, "esatte": 0, "conAiuto": 0, "errate": 0, "erroriTotali": 0, "consecutiveEsatte": 0, "maxConsecutiveEsatte": 0, "tempoTotaleSec": 0 },
+  "totale": { "svolti": 0, "esatte": 0, "conAiuto": 0, "errate": 0, "erroriTotali": 0, "consecutiveEsatte": 0, "maxConsecutiveEsatte": 0, "tempoTotaleSec": 0, "tempoEsatteSec": 0, "nEsatteTempo": 0 },
   "perTipo": {},
+  "giorni": {},
+  "errori": [],
   "sessioni": []
 }

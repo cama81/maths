@@ -24,7 +24,8 @@ function home(report) {
   <div class="dd" id="dd" hidden>
     <button onclick="menuAct('imp')">⬆ Importa esercizi</button>
     <button onclick="menuAct('snd')">${SOUND_ON ? '🔊 Suoni e voce: attivi' : '🔇 Suoni e voce: spenti'}</button>
-    <button onclick="menuAct('exp')">📊 Esporta statistiche</button>
+    <button onclick="menuAct('exp')">📤 Esporta statistiche</button>
+    <button onclick="menuAct('simp')">📥 Importa statistiche</button>
     ${installEvt ? '<button onclick="menuAct(\'inst\')">📲 Installa app</button>' : ''}
     ${DB_IMPORTED ? '<button onclick="menuAct(\'reset\')">↩ Ripristina esercizi originali</button>' : ''}
     <div class="ddinfo">Esercizi in uso: ${DB.length}${DB_IMPORTED ? ' (importati)' : ''}<br>Versione ${APP_VERSION}<br>Autore: Luigi Antonucci</div>
@@ -48,10 +49,12 @@ function menuAct(a) {
   if (a === 'imp') $('#file').click();
   else if (a === 'snd') { setSound(!SOUND_ON); if (SOUND_ON) speak('Brava!'); home(); }
   else if (a === 'exp') exportStats();
+  else if (a === 'simp') $('#sfile').click();
   else if (a === 'inst') installApp();
   else if (a === 'reset') resetDB().then(() => home({ msg: 'Esercizi originali (data/db.json) ripristinati.' }));
 }
 
+$('#sfile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) importStatsFile(f, home); });
 $('#file').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) importFile(f, home); });
 
 function start(m) {
