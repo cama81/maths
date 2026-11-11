@@ -1,6 +1,6 @@
 // Flusso dell'app: menu, sezioni da 10 esercizi, aiuto, riepilogo
 let stars = 0, mode = null, S = null, q = null, cur = 0, buf = '', tries = 0, errs = 0, helped = false, locked = false, t0 = 0,
-  abN = 0, abU = 0, hp = null, placed = [], bank = [], updatePending = false, installEvt = null, statView = 'sempre';
+  abN = 0, abU = 0, hp = null, placed = [], bank = [], updatePending = false, installEvt = null, statView = 'sempre', okRun = 0;
 
 const BRAVA = ['Brava!', 'Brava!', 'Che brava!', 'Bravissima!'];
 const PRAISE = ['Bravissima! 🎉', 'Perfetta! ⭐', 'Sei una campionessa! 🏆', 'Che brava! 👏', 'Ottimo lavoro! 🌟'];
@@ -99,7 +99,7 @@ function start(m) {
   mode = m;
   const list = m === 'mix' ? shuffle(Object.keys(MODES).flatMap(k => sample(pool(k), CFG.mixPerFunzione))) : sample(pool(m), CFG.perSezione);
   if (!list.length) return home();
-  S = { list, i: 0, esatte: 0, aiuto: 0, errate: 0, res: [] };
+  okRun = 0; S = { list, i: 0, esatte: 0, aiuto: 0, errate: 0, res: [] };
   show();
 }
 
@@ -141,8 +141,8 @@ function finish(esito) {
   S.res.push(esito);
   if (esito === 'esatta') { S.esatte++; stars++; } else if (esito === 'aiuto') S.aiuto++; else S.errate++;
   $('.stars').textContent = '⭐ ' + stars;
-  if (esito === 'errata') nextBtn();
-  else { say(pick(esito === 'esatta' ? PRAISE : HELPED), 'ok'); speak(pick(BRAVA)); const s = S; setTimeout(() => { if (S === s) advance(); }, 1300); }
+  if (esito === 'errata') { okRun = 0; nextBtn(); }
+  else { say(pick(esito === 'esatta' ? PRAISE : HELPED), 'ok'); if (++okRun >= CFG.bravaOgni) { okRun = 0; speak(pick(BRAVA)); } const s = S; setTimeout(() => { if (S === s) advance(); }, 1300); }
 }
 const solved = () => finish(helped ? 'aiuto' : 'esatta');
 
