@@ -2,12 +2,13 @@
 let stars = 0, mode = null, q = null, cur = 0, buf = '', tries = 0, locked = false, abN = 0, abU = 0, queue = [];
 
 function home(report) {
+  if (updatePending) return location.reload(); // nuova versione pronta
   mode = null;
   const n = CUSTOM.length;
   $('#app').innerHTML = `<h1>Matematica in gioco</h1><p class="sub">Scegli un gioco! Numeri da 1 a 100</p>
   <div class="menu">${Object.entries(MODES).map(([k, m]) => `<button onclick="start('${k}')"><span>${m.icon}</span>${m.name}</button>`).join('')}
   <button onclick="start('mine')" ${n ? '' : 'disabled'}><span>📁</span>I miei esercizi (${n})</button></div>
-  <div class="tools"><button onclick="$('#file').click()">⬆ Importa esercizi</button><button onclick="downloadExample()">⬇ File di esempio</button>${n ? '<button onclick="clearCustom();home()">🗑 Svuota i miei</button>' : ''}</div>
+  <div class="tools"><button onclick="$('#file').click()">⬆ Importa esercizi</button><button onclick="downloadExample()">⬇ File di esempio</button>${installEvt ? '<button onclick="installApp()">📲 Installa app</button>' : ''}${n ? '<button onclick="clearCustom();home()">🗑 Svuota i miei</button>' : ''}</div>
   <div class="report" id="rep"></div>`;
   if (report && report.errors) {
     const r = $('#rep');

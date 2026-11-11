@@ -22,3 +22,9 @@ Numeri sempre da 0 a 100.
 Campo opzionale `"titolo"` per serie e salti.
 
 Gli esercizi importati si aggiungono ai precedenti, sono salvati nel browser e compaiono sia nel gioco "I miei esercizi" sia mescolati (circa 1 su 3) nel gioco del loro tipo.
+
+## App installabile (PWA) e aggiornamenti
+- Il sito si può installare su telefono/tablet: Android/Chrome → menu ⋮ → "Installa app" (o il pulsante 📲 nel menu); iPhone/iPad (Safari) → Condividi → "Aggiungi alla schermata Home".
+- Funziona anche offline. Quando sei online e ripubblichi su GitHub Pages, l'app scarica i file nuovi da sola e si ricarica quando sei nel menu.
+- Per forzare l'aggiornamento della cache dopo modifiche, cambia `VERSION` in `sw.js` (es. 'v2').
+- I file devono stare alla radice del repository (accanto a `index.html`); icone in `icon-*.png`, configurazione in `manifest.webmanifest`.
