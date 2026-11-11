@@ -124,6 +124,21 @@ h3{margin:0 0 8px;font-size:1.05rem}
 .mbtns{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
 .mbtns button{font:inherit;font-weight:700;border-radius:12px;padding:9px 16px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 .mbtns .danger{background:var(--no);border-color:var(--no);color:#fff}
+/* statistiche per adulti */
+.delta{display:block;font-size:.7rem;font-weight:700;margin-top:2px}
+.delta.up{color:var(--ok)}.delta.dn{color:var(--no)}.delta.eq{color:var(--mute);font-weight:400}
+.chart{width:100%;height:auto;display:block}
+.chart .gl{stroke:var(--line);stroke-width:1}
+.chart .ln{fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.chart circle{fill:currentColor}
+.chart text{fill:var(--mute);font-size:9px}
+.ins{margin:0;padding-left:18px;font-size:.92rem}.ins li{margin:6px 0}
+.note{font-size:.8rem;color:var(--mute);margin:10px 4px 0}
+h3 small{font-weight:400;color:var(--mute);font-size:.78rem}
+.chip{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;font-size:.95rem}
+.chip button{font:inherit;font-size:.85rem;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:4px 10px;cursor:pointer}
+.tbl tr[onclick]{cursor:pointer}.tbl tr.sel td{background:var(--bg1)}
+.tbl .delta{display:inline;font-size:.72rem}
 /* telefoni */
 @media (max-width:420px){
   #app{padding:10px}

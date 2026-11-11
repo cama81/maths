@@ -52,47 +52,6 @@ function menuAct(a) {
   else if (a === 'reset') resetDB().then(() => home({ msg: 'Esercizi originali (data/db.json) ripristinati.' }));
 }
 
-// ---- Schermata statistiche (da sempre / ultimi 30 giorni) ----
-function setStatView(v) { statView = v; statsScreen(); }
-function statsScreen() {
-  mode = 'stats';
-  const month = statView === 'mese', M = month ? monthStats() : null;
-  const t = month ? M.totale : STATS.totale, per = k => (month ? M.perTipo : STATS.perTipo)[k] || zero();
-  const pct = (a, b) => b ? Math.round(a / b * 100) + '%' : '–';
-  const name = k => k === 'mix' ? '🎲 Mix' : MODES[k] ? `${MODES[k].icon} ${MODES[k].name}` : k;
-  const rows = Object.entries(MODES).map(([k, m]) => { const x = per(k);
-    return `<tr><td>${m.icon} ${m.name}</td><td>${x.svolti}</td><td>${pct(x.esatte, x.svolti)}</td><td>${x.erroriTotali}</td><td>${x.maxConsecutiveEsatte}</td></tr>`; }).join('');
-  const from = daysAgo(29); from.setHours(0, 0, 0, 0);
-  const sess = STATS.sessioni.filter(x => !month || new Date(x.data) >= from).slice(-8).reverse().map(x => `<div class="sess"><span>${name(x.sezione)}<br><small>${new Date(x.data).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</small></span><span>${x.esatte} ✓ · ${x.conAiuto} 💡 · ${x.errate} ✗<br><small>su ${x.totale}</small></span></div>`).join('');
-  const last = month ? `<div><b>${M.giorni}</b>giorni di gioco</div>` : `<div><b>${t.consecutiveEsatte}</b>esatte di fila ora</div>`;
-  $('#app').innerHTML = `<div class="top"><button onclick="home()">← Menu</button><h2 class="ttl">📊 Statistiche</h2><span style="width:70px"></span></div>
-  <div class="seg"><button class="${month ? '' : 'on'}" onclick="setStatView('sempre')">Da sempre</button><button class="${month ? 'on' : ''}" onclick="setStatView('mese')">Ultimi 30 giorni</button></div>
-  ${t.svolti ? `<div class="card"><div class="grid3">
-    <div><b>${t.svolti}</b>esercizi svolti</div><div><b>${pct(t.esatte, t.svolti)}</b>esatte</div><div><b>${t.maxConsecutiveEsatte}</b>${month ? 'miglior serie' : 'record di fila'}</div>
-    <div><b>${t.esatte}</b>esatte</div><div><b>${t.conAiuto}</b>con aiuto</div><div><b>${t.errate}</b>sbagliate</div>
-    <div><b>${t.erroriTotali}</b>errori totali</div><div><b>${Math.round(t.tempoTotaleSec / t.svolti)}s</b>tempo medio</div>${last}</div></div>
-  <div class="card"><h3>Per gioco</h3><div style="overflow-x:auto"><table class="tbl"><tr><th>Gioco</th><th>Svolti</th><th>Esatte</th><th>Errori</th><th>Record</th></tr>${rows}</table></div></div>
-  ${sess ? `<div class="card"><h3>Ultime sezioni</h3>${sess}</div>` : ''}`
-  : `<div class="card"><p class="q">${month ? 'Negli ultimi 30 giorni non ci sono ancora esercizi svolti.' : 'Ancora nessun esercizio svolto.'} Gioca una sezione e qui vedrai i risultati! ⭐</p></div>`}
-  <div class="rst"><button onclick="askReset()">🔒 Azzera statistiche</button></div>`;
-}
-// Azzeramento protetto da password (la password si imposta in js/config.js)
-function askReset() {
-  const m = document.createElement('div'); m.className = 'modal'; m.id = 'modal';
-  m.innerHTML = `<div class="mbox"><h3>🔒 Azzera statistiche</h3><p class="sub small" style="text-align:left">Cancella tutti i risultati salvati su questo dispositivo, anche quelli del mese. Inserisci la password per continuare.</p>
-  <input type="password" id="pw" autocomplete="off" placeholder="Password"><div class="msg" id="pmsg" style="min-height:26px;font-size:.95rem"></div>
-  <div class="mbtns"><button onclick="closeModal()">Annulla</button><button class="danger" onclick="doReset()">Azzera</button></div></div>`;
-  document.body.appendChild(m);
-  const i = $('#pw'); i.focus(); i.addEventListener('keydown', e => { if (e.key === 'Enter') doReset(); });
-}
-function closeModal() { const m = $('#modal'); if (m) m.remove(); }
-async function doReset() {
-  const ok = await checkPassword($('#pw').value), p = $('#pmsg');
-  if (ok === null) { p.textContent = 'Serve una connessione sicura (https) per verificare la password.'; p.className = 'msg no'; }
-  else if (!ok) { p.textContent = 'Password errata'; p.className = 'msg no'; $('#pw').select(); }
-  else { resetStats(); closeModal(); statsScreen(); }
-}
-
 $('#file').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) importFile(f, home); });
 
 function start(m) {
@@ -137,7 +96,7 @@ function advance() { if (!S || mode === null) return; S.i++; if (S.i >= S.list.l
 // Chiude l'esercizio: esito 'esatta' | 'aiuto' | 'errata'
 function finish(esito) {
   locked = true;
-  recordResult(q.mode, { esito, errori: errs, aiuto: helped, ms: Date.now() - t0 });
+  recordResult(q.mode, { esito, errori: errs, aiuto: helped, ms: Date.now() - t0, testo: describeEx(q) });
   S.res.push(esito);
   if (esito === 'esatta') { S.esatte++; stars++; } else if (esito === 'aiuto') S.aiuto++; else S.errate++;
   $('.stars').textContent = '⭐ ' + stars;

@@ -1,9 +1,9 @@
 // Service worker: app offline e aggiornamento automatico da GitHub Pages.
 // Ad ogni pubblicazione cambia VERSION (v2, v3, ...) così il browser rileva il nuovo sw.js e riscarica tutto.
-const VERSION = 'v9';
+const VERSION = 'v10';
 const CACHE = 'matematica2-' + VERSION;
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'css/style.css',
-  'js/utils.js', 'js/config.js', 'js/audio.js', 'js/models.js', 'js/stats.js', 'js/custom.js', 'js/render.js', 'js/app.js', 'js/pwa.js',
+  'js/utils.js', 'js/config.js', 'js/audio.js', 'js/models.js', 'js/stats.js', 'js/custom.js', 'js/render.js', 'js/statsui.js', 'js/app.js', 'js/pwa.js',
   'icon-192.png', 'favicon-32.png', 'icon-512.png', 'apple-touch-icon.png', 'img/fiaba.svg', 'data/db.json'];
 
 self.addEventListener('install', e => {

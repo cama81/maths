@@ -141,3 +141,17 @@ function colOptions(r) {
   const ds = pickDistractors([r + 1, r - 1, r + 10, r - 10, sw].map(x => x === null ? null : ok(x)), JSON.stringify(r), () => ok(R(0, 100)) ?? ok(R(0, 100)));
   return shuffle([{ v: r, ok: true }, ...ds.map(v => ({ v, ok: false }))]);
 }
+
+// Descrizione breve di un esercizio (per l'elenco "Da rivedere" nelle statistiche)
+function describeEx(q) {
+  const U = c => c === null ? '?' : c;
+  if (q.col) return `${q.col.a} ${q.col.op === '+' ? '+' : '−'} ${q.col.b} in colonna`;
+  if (q.miss) return q.cells.map(U).join(' + ') + ' = ' + q.miss.total;
+  if (q.abaco !== undefined) return 'abaco: leggere ' + q.abaco;
+  if (q.kind === 'fill') return q.mode === 'pd' ? `prima e dopo il ${q.cells[1]}` : q.cells.map((c, i) => (i && q.deltas[i - 1] ? signed(q.deltas[i - 1]) + ' ' : i ? '· ' : '') + U(c)).join(' ');
+  if (q.kind === 'cmp') return `${q.a} ? ${q.b}`;
+  if (q.kind === 'pick') return `${q.nums.join(', ')} → il ${q.ask === 'min' ? 'più piccolo' : 'più grande'}`;
+  if (q.kind === 'order') return `${q.nums.join(', ')} → ordine ${q.dir === 'cresc' ? 'crescente' : 'decrescente'}`;
+  if (q.kind === 'build') return 'abaco: costruire ' + q.v;
+  return '';
+}

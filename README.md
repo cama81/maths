@@ -1,4 +1,4 @@
-# Matematica in gioco – 2ª elementare (v1.8.2)
+# Matematica in gioco – 2ª elementare (v1.9.0)
 
 Va pubblicata su un sito (GitHub Pages) o aperta con un server locale (`python3 -m http.server`), perché legge `data/db.json`.
 
@@ -7,7 +7,7 @@ Va pubblicata su un sito (GitHub Pages) o aperta con un server locale (`python3 
 - `css/style.css` · `img/fiaba.svg` (sfondo fiabesco leggero; `castello.svg` e `stelle.svg` sono presenti ma non usati)
 - `js/config.js` impostazioni (esercizi per sezione, mix, password di reset)
 - `js/utils.js` utilità e numero versione · `js/models.js` tipi di esercizio, controlli e aiuto
-- `js/stats.js` statistiche · `js/custom.js` caricamento/import db · `js/render.js` disegno · `js/app.js` gioco · `js/pwa.js` installazione/aggiornamenti
+- `js/stats.js` raccolta dati · `js/statsui.js` schermata statistiche · `js/custom.js` caricamento/import db · `js/render.js` disegno · `js/app.js` gioco · `js/pwa.js` installazione/aggiornamenti
 - `data/db.json` TUTTI gli esercizi · `data/statistiche.json` modello vuoto delle statistiche
 - `tools/genera-db.js` rigenera un db.json casuale (`node tools/genera-db.js`) · `tools/hash-password.js` per cambiare la password
 
@@ -31,10 +31,12 @@ Per cambiare gli esercizi basta sostituire il file e ripubblicare (poi alza `VER
 - abaco: `{"tipo":"abaco","numero":37,"modalita":"leggi|costruisci"}`
 Le voci non valide vengono scartate. Lo stesso formato si importa da ⋮ → "Importa esercizi": il file SOSTITUISCE db.json su quel dispositivo; con ⋮ → "Ripristina esercizi originali" si torna a db.json del sito.
 
-## Statistiche
-Salvate nel browser del dispositivo (un sito statico non può scrivere nel repository). Icona 📊: vista "Da sempre" e "Ultimi 30 giorni" (si basa sui totali giornalieri, che si registrano dalla v1.5). ⋮ → "Esporta statistiche" scarica `statistiche.json`.
-In fondo alla pagina, a destra, "Azzera statistiche" chiede una password. Password iniziale: **Matematica2**. Per cambiarla: `node tools/hash-password.js NUOVA` e incolla il risultato in `resetPasswordHash` di `js/config.js`.
-Nota: in un sito statico la password è una protezione "da bambino", non sicurezza vera (chi conosce il codice può aggirarla). Richiede https (GitHub Pages lo è).
+## Statistiche (per genitori e insegnanti)
+Salvate nel browser del dispositivo (un sito statico non può scrivere nel repository). Icona 📊, due viste: **Ultimi 30 giorni** (con confronto sui 30 giorni precedenti) e **Dall'inizio**.
+Per ogni esercizio si registra: esito (esatta senza aiuto / con aiuto / sbagliata), tentativi sbagliati, tempo (solo per le esatte conta nella media, massimo 2 minuti a esercizio) e il testo dell'esercizio se sbagliato o fatto con aiuto.
+Schermata: quadro generale (svolti, % esatte, % con aiuto, % sbagliate, errori per esercizio, tempo per risposta esatta, giorni e minuti di gioco, record di fila) con freccette di miglioramento; frasi di sintesi; grafici dell'andamento (esatte, aiuto, tempo); tabella per gioco con trend, e toccando un gioco si vede il dettaglio dello stesso gioco; elenco "Da rivedere"; ultime sezioni.
+I dati giornalieri (per l'andamento e i confronti) si registrano dalla v1.5 e si conservano per 2 anni; i totali "dall'inizio" comprendono anche i dati precedenti. ⋮ → "Esporta statistiche" scarica `statistiche.json` con tutto (anche i giorni e l'elenco degli errori).
+In fondo alla pagina, a destra, "Azzera statistiche" chiede una password. Password iniziale: **Matematica2**. Per cambiarla: `node tools/hash-password.js NUOVA` e incolla il risultato in `resetPasswordHash` di `js/config.js`. In un sito statico è una protezione "da bambino", non sicurezza vera. Richiede https (GitHub Pages lo è).
 
 ## Aggiornamenti dell'app installata
 Online, l'app scarica da sola i file nuovi e si ricarica quando sei nel menu. Dopo ogni modifica cambia `VERSION` in `sw.js` e `APP_VERSION` in `js/utils.js`.

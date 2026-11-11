@@ -6,4 +6,4 @@ const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { c
 const signed = d => (d > 0 ? '+' : '−') + Math.abs(d);
 const sample = (a, n) => { if (!a.length) return []; let o = []; while (o.length < n) o = o.concat(shuffle(a)); return o.slice(0, n); };
 const download = (name, text) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' })); a.download = name; a.click(); };
-const APP_VERSION = '1.8.2'; // da aggiornare insieme a VERSION in sw.js
+const APP_VERSION = '1.9.0'; // da aggiornare insieme a VERSION in sw.js
