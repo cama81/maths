@@ -142,7 +142,7 @@ function finish(esito) {
   if (esito === 'esatta') { S.esatte++; stars++; } else if (esito === 'aiuto') S.aiuto++; else S.errate++;
   $('.stars').textContent = '⭐ ' + stars;
   if (esito === 'errata') { okRun = 0; nextBtn(); }
-  else { say(pick(esito === 'esatta' ? PRAISE : HELPED), 'ok'); if (++okRun >= CFG.bravaOgni) { okRun = 0; speak(pick(BRAVA)); } const s = S; setTimeout(() => { if (S === s) advance(); }, 1300); }
+  else { say(pick(esito === 'esatta' ? PRAISE : HELPED), 'ok'); soundRight(); if (++okRun >= CFG.bravaOgni) { okRun = 0; speak(pick(BRAVA)); } const s = S; setTimeout(() => { if (S === s) advance(); }, 1300); }
 }
 const solved = () => finish(helped ? 'aiuto' : 'esatta');
 
@@ -159,7 +159,7 @@ function check() {
   const s = $('#s' + cur);
   if (+buf === q.ans[cur]) {
     s.classList.add('done'); tries = 0; buf = ''; cur++;
-    if (cur >= q.ans.length) solved(); else { say('Giusto! Continua', 'ok'); hl(); }
+    if (cur >= q.ans.length) solved(); else { say('Giusto! Continua', 'ok'); soundStep(); hl(); }
   } else {
     wrongAns(); tries++; s.classList.add('shake'); setTimeout(() => s.classList.remove('shake'), 300);
     if (tries >= 2) { revealFrom(cur); say('Ecco la risposta giusta. Andiamo avanti!', 'no'); finish('errata'); }

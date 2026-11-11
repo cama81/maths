@@ -5,20 +5,25 @@ let _ac = null, _voice;
 
 function setSound(on) { SOUND_ON = on; try { localStorage.setItem(SND_KEY, on ? 'on' : 'off'); } catch (e) {} if (!on) stopVoice(); }
 
-// "bu-bu" morbido e discendente, non spaventoso
-function soundWrong() {
+// Riproduce una serie di note [frequenza, ritardo] con un timbro morbido
+function tones(notes, type, vol, dur) {
   if (!SOUND_ON) return;
   try {
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
     _ac = _ac || new AC(); if (_ac.resume) _ac.resume();
-    [[330, 0], [247, .2]].forEach(([f, t]) => {
+    notes.forEach(([f, t]) => {
       const o = _ac.createOscillator(), g = _ac.createGain(), s = _ac.currentTime + t;
-      o.type = 'triangle'; o.frequency.setValueAtTime(f, s);
-      g.gain.setValueAtTime(0.0001, s); g.gain.exponentialRampToValueAtTime(0.22, s + .03); g.gain.exponentialRampToValueAtTime(0.0001, s + .25);
-      o.connect(g); g.connect(_ac.destination); o.start(s); o.stop(s + .27);
+      o.type = type; o.frequency.setValueAtTime(f, s);
+      g.gain.setValueAtTime(0.0001, s); g.gain.exponentialRampToValueAtTime(vol, s + .03); g.gain.exponentialRampToValueAtTime(0.0001, s + dur);
+      o.connect(g); g.connect(_ac.destination); o.start(s); o.stop(s + dur + .02);
     });
   } catch (e) {}
 }
+// "bu-bu" morbido e discendente, non spaventoso
+const soundWrong = () => tones([[330, 0], [247, .2]], 'triangle', .22, .25);
+// campanellino allegro e ascendente (Do-Mi-Sol); da solo, una nota breve per i passaggi intermedi
+const soundRight = () => tones([[523, 0], [659, .12], [784, .24]], 'sine', .2, .3);
+const soundStep = () => tones([[659, 0]], 'sine', .14, .18);
 
 // Sceglie una voce italiana femminile, se il dispositivo ne ha una
 function pickVoice() {
