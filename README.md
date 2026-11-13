@@ -1,4 +1,4 @@
-# Matematica in gioco – 2ª elementare (v1.10.0)
+# Matematica in gioco – 2ª elementare (v1.11.1)
 
 Va pubblicata su un sito (GitHub Pages) o aperta con un server locale (`python3 -m http.server`), perché legge `data/db.json`.
 
@@ -13,7 +13,9 @@ Va pubblicata su un sito (GitHub Pages) o aperta con un server locale (`python3 
 
 ## Schermata principale
 In alto: titolo, icona 📊 (statistiche) e menu ⋮ (importa esercizi, esporta statistiche, installa app, versione e autore).
-Sotto il titolo il **Mix di tutto** (`mixPerFunzione` esercizi per gioco, 5 × 11 giochi = 55), poi i singoli giochi come approfondimento (10 esercizi, `perSezione`).
+Sotto il titolo il **Mix di tutto** (`mixPerFunzione` esercizi per gioco, 3 × 9 = 27; le versioni difficili "Calcoli in colonna" e "Il numero mancante" non sono mai nel Mix, `esclusiDalMix`; mai lo stesso esercizio due volte nello stesso mix), poi i singoli giochi come approfondimento (10 esercizi, `perSezione`). Durante il Mix il tasto Menu è bloccato (🔒) fino alla fine. Ogni esercizio del Mix conta nelle statistiche del suo gioco.
+**Giochi nascosti:** "Calcoli in colonna" e "Il numero mancante" (le versioni difficili) all'inizio sono nascosti; si riattivano da ⋮ (la scelta resta salvata sul dispositivo, `nascostiDefault` in `js/config.js`).
+**Segnalini sui pulsanti** (dati degli ultimi 30 giorni, o dall'inizio se negli ultimi 30 giorni ci sono meno di 5 esercizi): ⭐ se le esatte superano l'85%; ⚠️ se le sbagliate superano il 30% oppure se il gioco non si fa da almeno 2 settimane. Servono almeno 5 esercizi per le percentuali. Soglie in `js/config.js`.
 Giochi: serie, più e meno, segni < = >, prima e dopo, metti in ordine, il più piccolo/grande, calcoli in colonna (standard e facile), il numero mancante (standard e facile), abaco. Pulsante 💡 Aiuto in ogni esercizio.
 
 ## data/db.json

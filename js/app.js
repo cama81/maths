@@ -8,6 +8,25 @@ const HELPED = ['Brava, ce l’hai fatta! 💪', 'Ben fatto! La prossima volta c
 
 const pool = m => DB.filter(x => x.mode === m);
 
+// Giochi nascosti (le versioni difficili all'inizio); si riattivano da ⋮, la scelta resta salvata sul dispositivo
+const HID_KEY = 'matematica2.nascosti';
+let HIDDEN = (() => { try { const h = JSON.parse(localStorage.getItem(HID_KEY)); if (Array.isArray(h)) return h; } catch (e) {} return CFG.nascostiDefault.slice(); })();
+const visibleModes = () => Object.keys(MODES).filter(k => !HIDDEN.includes(k));
+function toggleHidden(k) { HIDDEN = HIDDEN.includes(k) ? HIDDEN.filter(x => x !== k) : HIDDEN.concat(k); try { localStorage.setItem(HID_KEY, JSON.stringify(HIDDEN)); } catch (e) {} }
+
+// Segnalini sui pulsanti dei giochi: ⭐ se va benissimo, ⚠️ se è trascurato da settimane o ha troppi errori
+function lastDay(k) { let m = ''; for (const [d, g] of Object.entries(STATS.giorni)) { const s = g.perTipo[k]; if (s && s.svolti && d > m) m = d; } return m; }
+function badge(k) {
+  const o30 = last30(k), o = o30.svolti >= CFG.minEsercizi ? o30 : allTime(k), out = [];
+  if (!o.svolti) return null;
+  const ok = o.esatte / o.svolti * 100, ko = o.errate / o.svolti * 100, ld = lastDay(k);
+  const giorni = ld ? Math.floor((new Date(dayKey()) - new Date(ld)) / 864e5) : 0;
+  if (o.svolti >= CFG.minEsercizi && ok > CFG.stellaOltre) out.push(['⭐', `${Math.round(ok)}% esatte`]);
+  if (ld && giorni >= CFG.attenzioneGiorni) out.push(['⚠️', `non lo fai da ${Math.floor(giorni / 7)} settimane`]);
+  else if (o.svolti >= CFG.minEsercizi && ko > CFG.attenzioneErrori) out.push(['⚠️', `${Math.round(ko)}% sbagliate`]);
+  return out.length ? out : null;
+}
+
 async function init() {
   $('#app').innerHTML = '<p class="sub" style="padding:30px">Caricamento…</p>';
   try { await loadDB(); home(); }
@@ -26,6 +45,7 @@ function home(report) {
     <button onclick="menuAct('snd')">${SOUND_ON ? '🔊 Suoni e voce: attivi' : '🔇 Suoni e voce: spenti'}</button>
     <button onclick="menuAct('exp')">📤 Esporta statistiche</button>
     <button onclick="menuAct('simp')">📥 Importa statistiche</button>
+    ${CFG.nascostiDefault.concat(HIDDEN.filter(k => !CFG.nascostiDefault.includes(k))).filter(k => MODES[k]).map(k => `<button onclick="menuAct('hid:${k}')">${HIDDEN.includes(k) ? '🙈' : '👁'} ${MODES[k].name}: ${HIDDEN.includes(k) ? 'nascosto' : 'visibile'}</button>`).join('')}
     ${installEvt ? '<button onclick="menuAct(\'inst\')">📲 Installa app</button>' : ''}
     ${DB_IMPORTED ? '<button onclick="menuAct(\'reset\')">↩ Ripristina esercizi originali</button>' : ''}
     <div class="ddinfo">Esercizi in uso: ${DB.length}${DB_IMPORTED ? ' (importati)' : ''}<br>Versione ${APP_VERSION}<br>Autore: Luigi Antonucci</div>
@@ -33,7 +53,8 @@ function home(report) {
   <p class="sub">Scegli come giocare ✨</p>
   <button class="main" onclick="start('mix')"><span class="mt">🎲 Mix di tutto</span><span class="ms">${CFG.mixPerFunzione} esercizi per ogni gioco, tutti mescolati</span></button>
   <div class="sec">Approfondisci un gioco · ${CFG.perSezione} esercizi</div>
-  <div class="menu">${Object.entries(MODES).map(([k, m]) => `<button style="--c:rgb(${m.c})" onclick="start('${k}')" ${pool(k).length ? '' : 'disabled'}><i>${m.icon}</i>${m.name}</button>`).join('')}</div>
+  <div class="menu">${visibleModes().map(k => { const m = MODES[k], b = badge(k);
+    return `<button style="--c:rgb(${m.c})" onclick="start('${k}')" ${pool(k).length ? '' : 'disabled'}${b ? ` title="${b.map(x => x[1]).join(' · ')}"` : ''}><i>${m.icon}</i>${m.name}${b ? `<span class="bdg">${b.map(x => x[0]).join('')}</span>` : ''}</button>`; }).join('')}</div>
   <div class="report" id="rep"></div>`;
   if (report) {
     const r = $('#rep'), errors = report.errors || [];
@@ -51,6 +72,7 @@ function menuAct(a) {
   else if (a === 'exp') exportStats();
   else if (a === 'simp') $('#sfile').click();
   else if (a === 'inst') installApp();
+  else if (a.startsWith('hid:')) { toggleHidden(a.slice(4)); home(); }
   else if (a === 'reset') resetDB().then(() => home({ msg: 'Esercizi originali (data/db.json) ripristinati.' }));
 }
 
@@ -59,7 +81,7 @@ $('#file').addEventListener('change', e => { const f = e.target.files[0]; e.targ
 
 function start(m) {
   mode = m;
-  const list = m === 'mix' ? shuffle(Object.keys(MODES).flatMap(k => sample(pool(k), CFG.mixPerFunzione))) : sample(pool(m), CFG.perSezione);
+  const list = m === 'mix' ? shuffle(visibleModes().filter(k => !CFG.esclusiDalMix.includes(k)).flatMap(k => sampleUnique(pool(k), CFG.mixPerFunzione))) : sample(pool(m), CFG.perSezione);
   if (!list.length) return home();
   okRun = 0; S = { list, i: 0, esatte: 0, aiuto: 0, errate: 0, res: [] };
   show();

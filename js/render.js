@@ -43,6 +43,6 @@ function padHTML() {
 }
 function shell(inner) {
   const n = S ? S.list.length : 0, i = S ? S.i : 0;
-  $('#app').innerHTML = `<div class="top"><button onclick="home()">← Menu</button><div class="prog">${i + 1} / ${n}</div><div class="stars">⭐ ${stars}</div></div><div class="bar"><i style="width:${n ? i / n * 100 : 0}%"></i></div><div class="card">${inner}</div>`;
+  $('#app').innerHTML = `<div class="top">${mode === 'mix' ? '<button disabled title="Finisci il mix per tornare al menu">🔒 Menu</button>' : '<button onclick="home()">← Menu</button>'}<div class="prog">${i + 1} / ${n}</div><div class="stars">⭐ ${stars}</div></div><div class="bar"><i style="width:${n ? i / n * 100 : 0}%"></i></div><div class="card">${inner}</div>`;
 }
 
