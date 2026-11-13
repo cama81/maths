@@ -1,4 +1,4 @@
-# Matematica in gioco – 2ª elementare (v1.14.0)
+# Matematica in gioco – 2ª elementare (v1.16.0)
 
 Va pubblicata su un sito (GitHub Pages) o aperta con un server locale (`python3 -m http.server`), perché legge `data/db.json`.
 

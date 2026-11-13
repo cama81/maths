@@ -1,6 +1,6 @@
 // Service worker: app offline e aggiornamento automatico da GitHub Pages.
 // Ad ogni pubblicazione cambia VERSION (v2, v3, ...) così il browser rileva il nuovo sw.js e riscarica tutto.
-const VERSION = 'v16';
+const VERSION = 'v18';
 const CACHE = 'matematica2-' + VERSION;
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'css/style.css',
   'js/utils.js', 'js/config.js', 'js/audio.js', 'js/models.js', 'js/stats.js', 'js/custom.js', 'js/render.js', 'js/statsui.js', 'js/app.js', 'js/pwa.js',

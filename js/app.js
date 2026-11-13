@@ -113,10 +113,10 @@ function home(report) {
   </div></div>
   <p class="sub">Scegli come giocare ✨</p>
   <div class="coll"><span>Hai collezionato <b>${totPremi('stelle')}</b> ⭐</span><span><b>${totPremi('trofei')}</b> 🏆</span></div>
-  <button class="main" onclick="start('mix')"><span class="mt">🎲 Mix di tutto</span><span class="ms">${CFG.mixPerFunzione} esercizi per ogni gioco, tutti mescolati</span></button>
+  <button class="main" onclick="start('mix')"><span class="mt"><i class="dice">🎲</i> Mix di tutto</span><span class="ms">${CFG.mixPerFunzione} esercizi per ogni gioco, tutti mescolati</span></button>
   <div class="sec">Approfondisci un gioco · ${CFG.perSezione} esercizi</div>
   <div class="menu">${visibleModes().map(k => { const m = MODES[k], b = badge(k);
-    return `<button style="--c:rgb(${m.c})" onclick="start('${k}')" ${pool(k).length ? '' : 'disabled'}${b ? ` title="${b.map(x => x[1]).join(' · ')}"` : ''}><i>${m.icon}</i>${m.name}${b ? `<span class="bdg">${b.map(x => x[0]).join('')}</span>` : ''}</button>`; }).join('')}</div>
+    return `<button style="--c:rgb(${m.c});--rgb:${m.c}" onclick="start('${k}')" ${pool(k).length ? '' : 'disabled'}${b ? ` title="${b.map(x => x[1]).join(' · ')}"` : ''}><i>${m.icon}</i><span class="nm">${m.name}</span>${b ? `<span class="bdg">${b.map(x => x[0]).join('')}</span>` : ''}</button>`; }).join('')}</div>
   <div class="report" id="rep"></div>`;
   if (report) {
     const r = $('#rep'), errors = report.errors || [];
