@@ -9,17 +9,21 @@ const HELPED = ['Brava, ce l’hai fatta! 💪', 'Ben fatto! La prossima volta c
 const pool = m => DB.filter(x => x.mode === m);
 
 // Collezione premi (resta sul dispositivo e NON si azzera con le statistiche):
-//  stelle = una ⭐ per ogni risposta esatta senza aiuto · trofei = un 🏆 per ogni sezione finita con almeno CFG.trofeoDa %
-// Al primo avvio parte da quanto già fatto (esatte e sezioni registrate nelle statistiche).
+//  stelle = una ⭐ per ogni sezione (o Mix) finita fino in fondo · trofei = un 🏆 per ogni sezione finita con almeno CFG.trofeoDa %
+// Al primo avvio parte da quanto già fatto (sezioni registrate nelle statistiche).
+const PREMI_V = 2; // v2: stelle = sezioni finite (prima erano le risposte esatte)
 // PREMI = premi vinti su questo dispositivo (con un id fisso, che non cambia azzerando le statistiche);
 // PREMI_IMP = premi importati da altri dispositivi (un'istantanea per dispositivo, come le statistiche) -> il totale è la somma.
 const PRIZE_KEY = 'matematica2.premi', PRIZE_IMP_KEY = 'matematica2.premi.importati';
 const sezScore = x => (x.esatte + (x.conAiuto || 0) * .5) / x.totale;
 let PREMI = (() => { try { const p = JSON.parse(localStorage.getItem(PRIZE_KEY)); if (p && typeof p.stelle === 'number') return p; } catch (e) {}
-  return { stelle: OWN.totale.esatte, trofei: OWN.sessioni.filter(x => !x.interrotta && x.totale && sezScore(x) * 100 >= CFG.trofeoDa).length }; })();
+  return { trofei: OWN.sessioni.filter(x => !x.interrotta && x.totale && sezScore(x) * 100 >= CFG.trofeoDa).length }; })();
+let PREMI_IMP = (() => { try { return JSON.parse(localStorage.getItem(PRIZE_IMP_KEY)) || {}; } catch (e) { return {}; } })();
+if (PREMI.v !== PREMI_V) { // passaggio alle nuove stelle: una per ogni sezione già finita; i premi importati con le vecchie stelle si rimportano
+  PREMI.stelle = OWN.sessioni.filter(x => !x.interrotta).length; PREMI.v = PREMI_V; PREMI_IMP = {};
+}
 if (!PREMI.id) PREMI.id = 'p-' + new Date().toISOString() + '-' + Math.random().toString(36).slice(2, 6);
 if (typeof PREMI.trofei !== 'number') PREMI.trofei = 0;
-let PREMI_IMP = (() => { try { return JSON.parse(localStorage.getItem(PRIZE_IMP_KEY)) || {}; } catch (e) { return {}; } })();
 const savePremi = () => { PREMI.aggiornato = new Date().toISOString(); try { localStorage.setItem(PRIZE_KEY, JSON.stringify(PREMI)); localStorage.setItem(PRIZE_IMP_KEY, JSON.stringify(PREMI_IMP)); } catch (e) {} };
 const totPremi = k => PREMI[k] + Object.values(PREMI_IMP).reduce((s, x) => s + (x[k] || 0), 0);
 savePremi();
@@ -28,7 +32,7 @@ savePremi();
 function exportData() {
   const p = buildPackage(); // statistiche (questo dispositivo + quelli già importati)
   p.formato = 'matematica-dati';
-  p.premi = { [PREMI.id]: { stelle: PREMI.stelle, trofei: PREMI.trofei, aggiornato: PREMI.aggiornato } };
+  p.premi = { [PREMI.id]: { stelle: PREMI.stelle, trofei: PREMI.trofei, aggiornato: PREMI.aggiornato, v: PREMI_V } };
   Object.entries(PREMI_IMP).forEach(([id, x]) => { p.premi[id] = x; });
   let es = null; try { es = JSON.parse(localStorage.getItem(LS_KEY)); } catch (e) {}
   p.impostazioni = { nascosti: HIDDEN, suoni: SOUND_ON, esercizi: Array.isArray(es) ? es : null };
@@ -40,9 +44,9 @@ function applyData(pkg) {
   if (pkg && pkg.premi && typeof pkg.premi === 'object') {
     let n = 0;
     Object.entries(pkg.premi).forEach(([id, x]) => {
-      if (id === PREMI.id || !x || typeof x.stelle !== 'number') return;
+      if (id === PREMI.id || !x || typeof x.stelle !== 'number' || x.v !== PREMI_V) return; // i file con le vecchie stelle (una per risposta) si ignorano
       const old = PREMI_IMP[id];
-      if (!old || String(x.aggiornato) > String(old.aggiornato)) { PREMI_IMP[id] = { stelle: x.stelle, trofei: x.trofei || 0, aggiornato: x.aggiornato }; n++; }
+      if (!old || String(x.aggiornato) > String(old.aggiornato)) { PREMI_IMP[id] = { stelle: x.stelle, trofei: x.trofei || 0, aggiornato: x.aggiornato, v: PREMI_V }; n++; }
     });
     savePremi(); stars = totPremi('stelle');
     parts.push(n ? `Premi aggiornati: ora la collezione è di ${totPremi('stelle')} ⭐ e ${totPremi('trofei')} 🏆.` : 'Premi già presenti, nessuna modifica.');
@@ -188,8 +192,7 @@ function finish(esito) {
   locked = true;
   recordResult(q.mode, { esito, errori: errs, aiuto: helped, ms: Date.now() - t0, testo: describeEx(q) });
   S.res.push(esito);
-  if (esito === 'esatta') { S.esatte++; PREMI.stelle++; savePremi(); stars = totPremi('stelle'); } else if (esito === 'aiuto') S.aiuto++; else S.errate++;
-  $('.stars').textContent = '⭐ ' + stars;
+  if (esito === 'esatta') S.esatte++; else if (esito === 'aiuto') S.aiuto++; else S.errate++;
   if (esito === 'errata') { okRun = 0; nextBtn(); }
   else { say(pick(esito === 'esatta' ? PRAISE : HELPED), 'ok'); soundRight(); if (++okRun >= CFG.bravaOgni) { okRun = 0; speak(pick(BRAVA)); } const s = S; setTimeout(() => { if (S === s) advance(); }, 1300); }
 }
@@ -308,14 +311,15 @@ function askHelp() {
 function summary() {
   const n = S.list.length, sc = (S.esatte + S.aiuto * .5) / n;
   recordSession({ sezione: mode, totale: n, esatte: S.esatte, conAiuto: S.aiuto, errate: S.errate });
-  const trofeo = sc * 100 >= CFG.trofeoDa; if (trofeo) { PREMI.trofei++; savePremi(); }
+  const trofeo = sc * 100 >= CFG.trofeoDa; PREMI.stelle++; if (trofeo) PREMI.trofei++; savePremi(); stars = totPremi('stelle');
   const lv = sc >= .7 ? 0 : sc >= .4 ? 1 : 2; // 70% e oltre / dal 40% al 70% / sotto il 40%
   const msg = ['Ottimo lavoro! Sei una vera campionessa dei numeri! 🏆', 'Ci siamo quasi! Ancora un piccolo sforzo e sarai perfetta! 💪', 'Puoi fare meglio! Riprova, sono sicura che andrà meglio! 🌈'][lv];
   speak(['Ottimo lavoro!', 'Ci siamo quasi!', 'Puoi fare meglio!'][lv]);
   $('#app').innerHTML = `<h1>${mode === 'mix' ? 'Mix finito!' : 'Sezione finita!'}</h1><div class="card sum">
   <div class="dots">${S.res.map(r => `<span class="dot ${r}">${r === 'esatta' ? '✓' : r === 'aiuto' ? '💡' : '✗'}</span>`).join('')}</div>
   <div class="tot"><div><b class="g">${S.esatte}</b>esatte</div><div><b class="y">${S.aiuto}</b>con aiuto</div><div><b class="r">${S.errate}</b>sbagliate</div></div>
-  ${trofeo ? `<div class="trophy"><span>🏆</span>Hai vinto un trofeo! Ora ne hai ${totPremi('trofei')}</div>` : `<p class="sub small">Con almeno il ${CFG.trofeoDa}% vinci un trofeo 🏆</p>`}
+  <div class="trophy"><span>${trofeo ? '⭐🏆' : '⭐'}</span>${trofeo ? 'Hai vinto una stella e un trofeo!' : 'Hai vinto una stella!'}<br><small>Ora hai ${stars} ⭐ e ${totPremi('trofei')} 🏆</small></div>
+  ${trofeo ? '' : `<p class="sub small">Con almeno il ${CFG.trofeoDa}% vinci anche un trofeo 🏆</p>`}
   <p class="q">${msg}</p><button class="big go" onclick="start('${mode}')">Ancora!</button><button class="big next" style="margin-top:10px" onclick="home()">Menu</button></div>`;
 }
 
