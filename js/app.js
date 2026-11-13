@@ -35,7 +35,7 @@ function exportData() {
   p.premi = { [PREMI.id]: { stelle: PREMI.stelle, trofei: PREMI.trofei, aggiornato: PREMI.aggiornato, v: PREMI_V } };
   Object.entries(PREMI_IMP).forEach(([id, x]) => { p.premi[id] = x; });
   let es = null; try { es = JSON.parse(localStorage.getItem(LS_KEY)); } catch (e) {}
-  p.impostazioni = { nascosti: HIDDEN, suoni: SOUND_ON, esercizi: Array.isArray(es) ? es : null };
+  p.impostazioni = { nascosti: HIDDEN, suoni: SOUND_ON, tema: THEME, esercizi: Array.isArray(es) ? es : null };
   download('matematica-dati.json', JSON.stringify(p, null, 2));
 }
 function applyData(pkg) {
@@ -56,8 +56,9 @@ function applyData(pkg) {
   if (imp && typeof imp === 'object') {
     if (Array.isArray(imp.nascosti)) { HIDDEN = imp.nascosti.filter(k => MODES[k]); try { localStorage.setItem(HID_KEY, JSON.stringify(HIDDEN)); } catch (e) {} }
     if (typeof imp.suoni === 'boolean') setSound(imp.suoni);
+    if (typeof imp.tema === 'string') setTheme(imp.tema);
     if (Array.isArray(imp.esercizi)) { const { db, raw } = buildDB(imp.esercizi); if (db.length) { DB = db; DB_IMPORTED = true; try { localStorage.setItem(LS_KEY, JSON.stringify(raw)); } catch (e) {} } }
-    parts.push('Impostazioni applicate (giochi nascosti, suoni' + (Array.isArray(imp.esercizi) ? ', esercizi importati' : '') + ').');
+    parts.push('Impostazioni applicate (giochi nascosti, suoni, tema' + (Array.isArray(imp.esercizi) ? ', esercizi importati' : '') + ').');
   }
   return { msg: parts.join(' '), errors: r.fonti.length ? r.errors : [] };
 }
@@ -68,6 +69,16 @@ function importDataFile(file, done) {
   rd.readAsText(file);
 }
 let stars = totPremi('stelle');
+
+// Tema: 'auto' (segue il dispositivo) | 'light' | 'dark'; si cambia da ⋮
+const THEME_KEY = 'matematica2.tema', THEMES = { auto: '🌓 Tema: automatico', light: '☀️ Tema: chiaro', dark: '🌙 Tema: scuro' };
+let THEME = (() => { try { const t = localStorage.getItem(THEME_KEY); return THEMES[t] ? t : 'auto'; } catch (e) { return 'auto'; } })();
+function setTheme(t) {
+  THEME = THEMES[t] ? t : 'auto';
+  try { localStorage.setItem(THEME_KEY, THEME); } catch (e) {}
+  if (THEME === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', THEME);
+}
+setTheme(THEME);
 
 // Giochi nascosti (le versioni difficili all'inizio); si riattivano da ⋮, la scelta resta salvata sul dispositivo
 const HID_KEY = 'matematica2.nascosti';
@@ -104,6 +115,7 @@ function home(report) {
   <div class="dd" id="dd" hidden>
     <button onclick="menuAct('imp')">⬆ Importa esercizi</button>
     <button onclick="menuAct('snd')">${SOUND_ON ? '🔊 Suoni e voce: attivi' : '🔇 Suoni e voce: spenti'}</button>
+    <button onclick="menuAct('tema')">${THEMES[THEME]}</button>
     <button onclick="menuAct('exp')">📤 Esporta dati</button>
     <button onclick="menuAct('simp')">📥 Importa dati</button>
     ${CFG.nascostiDefault.concat(HIDDEN.filter(k => !CFG.nascostiDefault.includes(k))).filter(k => MODES[k]).map(k => `<button onclick="menuAct('hid:${k}')">${HIDDEN.includes(k) ? '🙈' : '👁'} ${MODES[k].name}: ${HIDDEN.includes(k) ? 'nascosto' : 'visibile'}</button>`).join('')}
@@ -131,6 +143,7 @@ function menuAct(a) {
   const d = $('#dd'); if (d) d.hidden = true;
   if (a === 'imp') $('#file').click();
   else if (a === 'snd') { setSound(!SOUND_ON); if (SOUND_ON) speak('Brava!'); home(); }
+  else if (a === 'tema') { setTheme({ auto: 'light', light: 'dark', dark: 'auto' }[THEME]); home(); $('#dd').hidden = false; }
   else if (a === 'exp') exportData();
   else if (a === 'simp') $('#sfile').click();
   else if (a === 'inst') installApp();

@@ -1,4 +1,4 @@
-# Matematica in gioco – 2ª elementare (v1.16.0)
+# Matematica in gioco – 2ª elementare (v1.17.0)
 
 Va pubblicata su un sito (GitHub Pages) o aperta con un server locale (`python3 -m http.server`), perché legge `data/db.json`.
 
@@ -16,6 +16,7 @@ In alto: titolo, icona 📊 (statistiche) e menu ⋮ (importa esercizi, esporta/
 Sotto il titolo il **Mix di tutto** (`mixPerFunzione` esercizi per gioco, 3 × 9 = 27; le versioni difficili "Calcoli in colonna" e "Il numero mancante" non sono mai nel Mix, `esclusiDalMix`; mai lo stesso esercizio due volte nello stesso mix), poi i singoli giochi come approfondimento (10 esercizi, `perSezione`). Durante il Mix il tasto Menu è bloccato (🔒) fino alla fine. Ogni esercizio del Mix conta nelle statistiche del suo gioco.
 **Collezione premi:** sotto il titolo "Hai collezionato N ⭐" e il numero di trofei 🏆. Una stella per ogni sezione (o Mix) finita fino in fondo, qualunque sia il risultato; in più un trofeo se è finita con almeno il 90% (`trofeoDa`; le risposte con aiuto valgono metà). Al primo avvio la collezione parte da quanto già fatto. È salvata sul dispositivo e NON si azzera con "Azzera statistiche".
 **Uscire a metà:** con "← Menu" in un gioco singolo gli esercizi già fatti restano nelle statistiche (si salvano uno per uno) e la sezione compare tra le ultime come "interrotta".
+**Tema chiaro/scuro:** ⋮ → "Tema" passa da automatico (segue il dispositivo) a chiaro a scuro; la scelta resta salvata ed è inclusa in "Esporta dati".
 **Giochi nascosti:** "Calcoli in colonna" e "Il numero mancante" (le versioni difficili) all'inizio sono nascosti; si riattivano da ⋮ (la scelta resta salvata sul dispositivo, `nascostiDefault` in `js/config.js`).
 **Segnalini sui pulsanti** (dati degli ultimi 30 giorni, o dall'inizio se negli ultimi 30 giorni ci sono meno di 5 esercizi): ⭐ se le esatte superano l'85%; ⚠️ se le sbagliate superano il 30% oppure se il gioco non si fa da almeno 2 settimane. Servono almeno 5 esercizi per le percentuali. Soglie in `js/config.js`.
 Giochi: serie, più e meno, segni < = >, prima e dopo, metti in ordine, il più piccolo/grande, calcoli in colonna (standard e facile), il numero mancante (standard e facile), abaco. Pulsante 💡 Aiuto in ogni esercizio.

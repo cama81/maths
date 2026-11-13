@@ -8,4 +8,4 @@ const signed = d => (d > 0 ? '+' : '−') + Math.abs(d);
 const sampleUnique = (a, n) => shuffle(a).slice(0, n);
 const sample = (a, n) => { if (!a.length) return []; let o = []; while (o.length < n) o = o.concat(shuffle(a)); return o.slice(0, n); };
 const download = (name, text) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' })); a.download = name; a.click(); };
-const APP_VERSION = '1.16.0'; // da aggiornare insieme a VERSION in sw.js
+const APP_VERSION = '1.17.0'; // da aggiornare insieme a VERSION in sw.js
