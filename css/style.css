@@ -19,6 +19,12 @@ h1 .g{background:linear-gradient(90deg,var(--b),var(--a));-webkit-background-cli
 .dd button:active{background:var(--line)}
 .ddinfo{border-top:1.5px solid var(--line);margin-top:4px;padding:10px 12px 4px;font-size:.82rem;color:var(--mute);line-height:1.5}
 /* menu: mix in evidenza, poi gli approfondimenti */
+.coll{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:-4px 0 14px}
+.coll span{background:var(--card);border:1.5px solid var(--gold);border-radius:16px;padding:6px 14px;font-weight:700;font-size:1rem;box-shadow:0 2px 8px rgba(180,120,210,.15)}
+.coll b{font-size:1.15rem}
+.trophy{text-align:center;font-size:1.15rem;font-weight:700;margin:6px 0 2px}
+.trophy span{display:block;font-size:3rem;animation:pop .6s}
+@keyframes pop{0%{transform:scale(.2)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
 .main{display:block;width:100%;border:1.5px solid var(--gold);border-radius:24px;padding:18px 14px;background:linear-gradient(135deg,var(--mixA),var(--mixB));color:var(--ink);font:inherit;cursor:pointer;box-shadow:0 6px 18px rgba(180,120,210,.18);text-align:center}
 .main .mt{display:block;font-size:1.35rem;font-weight:700}
 .main .ms{display:block;font-size:.88rem;opacity:.8;margin-top:2px}
@@ -67,7 +73,7 @@ button.slot{background:transparent;color:var(--ink);font-family:inherit;cursor:p
 .col{display:grid;justify-content:center;align-items:center;margin:8px auto;width:max-content;max-width:100%}
 .cc{height:52px;min-width:52px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:700}
 .cc.hd{height:22px;font-size:.78rem;font-weight:400;color:var(--mute)}
-.cc.op{color:var(--b)}
+.cc.op{color:var(--b);justify-content:flex-start;padding-left:6px}
 .cc.lab{font-size:.75rem;font-weight:400;color:var(--mute);justify-content:flex-end;padding-right:4px;min-width:0}
 .cc .slot{min-width:44px;height:44px;padding:0}
 .cc .slot.sm{min-width:34px;height:34px;font-size:1.05rem;border-radius:10px}

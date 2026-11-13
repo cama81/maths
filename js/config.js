@@ -8,6 +8,7 @@ const CFG = {
   stellaOltre: 85,       // ⭐ sul pulsante del gioco se le esatte superano questa % (servono almeno minEsercizi)
   attenzioneErrori: 30,  // ⚠️ se le sbagliate superano questa %
   attenzioneGiorni: 14,  // ⚠️ se il gioco non si fa da almeno questi giorni (2 settimane)
+  trofeoDa: 90,          // 🏆 quando si finisce una sezione (o il Mix) con almeno questa % (le risposte con aiuto valgono metà)
   minEsercizi: 5,        // esercizi minimi prima di mostrare ⭐ o ⚠️ per le percentuali
   // password per azzerare le statistiche (impronta SHA-256). Per cambiarla:  node tools/hash-password.js NUOVAPASSWORD
   resetPasswordHash: '4006b83a55baab5cebb54e0a3fe8f70eecc6ae21f27a5a6d1c9073a229458fb1'

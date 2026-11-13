@@ -1,5 +1,5 @@
 // Flusso dell'app: menu, sezioni da 10 esercizi, aiuto, riepilogo
-let stars = 0, mode = null, S = null, q = null, cur = 0, buf = '', tries = 0, errs = 0, helped = false, locked = false, t0 = 0,
+let mode = null, S = null, q = null, cur = 0, buf = '', tries = 0, errs = 0, helped = false, locked = false, t0 = 0,
   abN = 0, abU = 0, hp = null, placed = [], bank = [], updatePending = false, installEvt = null, statView = 'sempre', okRun = 0;
 
 const BRAVA = ['Brava!', 'Brava!', 'Che brava!', 'Bravissima!'];
@@ -7,6 +7,63 @@ const PRAISE = ['Bravissima! 🎉', 'Perfetta! ⭐', 'Sei una campionessa! 🏆'
 const HELPED = ['Brava, ce l’hai fatta! 💪', 'Ben fatto! La prossima volta ci riesci da sola! 🌈'];
 
 const pool = m => DB.filter(x => x.mode === m);
+
+// Collezione premi (resta sul dispositivo e NON si azzera con le statistiche):
+//  stelle = una ⭐ per ogni risposta esatta senza aiuto · trofei = un 🏆 per ogni sezione finita con almeno CFG.trofeoDa %
+// Al primo avvio parte da quanto già fatto (esatte e sezioni registrate nelle statistiche).
+// PREMI = premi vinti su questo dispositivo (con un id fisso, che non cambia azzerando le statistiche);
+// PREMI_IMP = premi importati da altri dispositivi (un'istantanea per dispositivo, come le statistiche) -> il totale è la somma.
+const PRIZE_KEY = 'matematica2.premi', PRIZE_IMP_KEY = 'matematica2.premi.importati';
+const sezScore = x => (x.esatte + (x.conAiuto || 0) * .5) / x.totale;
+let PREMI = (() => { try { const p = JSON.parse(localStorage.getItem(PRIZE_KEY)); if (p && typeof p.stelle === 'number') return p; } catch (e) {}
+  return { stelle: OWN.totale.esatte, trofei: OWN.sessioni.filter(x => !x.interrotta && x.totale && sezScore(x) * 100 >= CFG.trofeoDa).length }; })();
+if (!PREMI.id) PREMI.id = 'p-' + new Date().toISOString() + '-' + Math.random().toString(36).slice(2, 6);
+if (typeof PREMI.trofei !== 'number') PREMI.trofei = 0;
+let PREMI_IMP = (() => { try { return JSON.parse(localStorage.getItem(PRIZE_IMP_KEY)) || {}; } catch (e) { return {}; } })();
+const savePremi = () => { PREMI.aggiornato = new Date().toISOString(); try { localStorage.setItem(PRIZE_KEY, JSON.stringify(PREMI)); localStorage.setItem(PRIZE_IMP_KEY, JSON.stringify(PREMI_IMP)); } catch (e) {} };
+const totPremi = k => PREMI[k] + Object.values(PREMI_IMP).reduce((s, x) => s + (x[k] || 0), 0);
+savePremi();
+
+// ---- Esporta / importa dati: statistiche + premi + impostazioni (giochi nascosti, suoni, esercizi importati) ----
+function exportData() {
+  const p = buildPackage(); // statistiche (questo dispositivo + quelli già importati)
+  p.formato = 'matematica-dati';
+  p.premi = { [PREMI.id]: { stelle: PREMI.stelle, trofei: PREMI.trofei, aggiornato: PREMI.aggiornato } };
+  Object.entries(PREMI_IMP).forEach(([id, x]) => { p.premi[id] = x; });
+  let es = null; try { es = JSON.parse(localStorage.getItem(LS_KEY)); } catch (e) {}
+  p.impostazioni = { nascosti: HIDDEN, suoni: SOUND_ON, esercizi: Array.isArray(es) ? es : null };
+  download('matematica-dati.json', JSON.stringify(p, null, 2));
+}
+function applyData(pkg) {
+  const r = applyStatsPackage(pkg), parts = [r.fonti.length ? statsMessage(r) : 'Nessuna statistica nel file.'];
+  // premi: per ogni dispositivo si tiene l'istantanea più recente, quindi reimportare non li raddoppia
+  if (pkg && pkg.premi && typeof pkg.premi === 'object') {
+    let n = 0;
+    Object.entries(pkg.premi).forEach(([id, x]) => {
+      if (id === PREMI.id || !x || typeof x.stelle !== 'number') return;
+      const old = PREMI_IMP[id];
+      if (!old || String(x.aggiornato) > String(old.aggiornato)) { PREMI_IMP[id] = { stelle: x.stelle, trofei: x.trofei || 0, aggiornato: x.aggiornato }; n++; }
+    });
+    savePremi(); stars = totPremi('stelle');
+    parts.push(n ? `Premi aggiornati: ora la collezione è di ${totPremi('stelle')} ⭐ e ${totPremi('trofei')} 🏆.` : 'Premi già presenti, nessuna modifica.');
+  }
+  // impostazioni: vengono prese dal file
+  const imp = pkg && pkg.impostazioni;
+  if (imp && typeof imp === 'object') {
+    if (Array.isArray(imp.nascosti)) { HIDDEN = imp.nascosti.filter(k => MODES[k]); try { localStorage.setItem(HID_KEY, JSON.stringify(HIDDEN)); } catch (e) {} }
+    if (typeof imp.suoni === 'boolean') setSound(imp.suoni);
+    if (Array.isArray(imp.esercizi)) { const { db, raw } = buildDB(imp.esercizi); if (db.length) { DB = db; DB_IMPORTED = true; try { localStorage.setItem(LS_KEY, JSON.stringify(raw)); } catch (e) {} } }
+    parts.push('Impostazioni applicate (giochi nascosti, suoni' + (Array.isArray(imp.esercizi) ? ', esercizi importati' : '') + ').');
+  }
+  return { msg: parts.join(' '), errors: r.fonti.length ? r.errors : [] };
+}
+function importDataFile(file, done) {
+  const rd = new FileReader();
+  rd.onload = () => { let d; try { d = JSON.parse(rd.result); } catch (e) { return done({ msg: 'Nessun dato importato.', errors: ['File JSON non valido: ' + e.message] }); } done(applyData(d)); };
+  rd.onerror = () => done({ msg: 'Nessun dato importato.', errors: ['Impossibile leggere il file'] });
+  rd.readAsText(file);
+}
+let stars = totPremi('stelle');
 
 // Giochi nascosti (le versioni difficili all'inizio); si riattivano da ⋮, la scelta resta salvata sul dispositivo
 const HID_KEY = 'matematica2.nascosti';
@@ -43,14 +100,15 @@ function home(report) {
   <div class="dd" id="dd" hidden>
     <button onclick="menuAct('imp')">⬆ Importa esercizi</button>
     <button onclick="menuAct('snd')">${SOUND_ON ? '🔊 Suoni e voce: attivi' : '🔇 Suoni e voce: spenti'}</button>
-    <button onclick="menuAct('exp')">📤 Esporta statistiche</button>
-    <button onclick="menuAct('simp')">📥 Importa statistiche</button>
+    <button onclick="menuAct('exp')">📤 Esporta dati</button>
+    <button onclick="menuAct('simp')">📥 Importa dati</button>
     ${CFG.nascostiDefault.concat(HIDDEN.filter(k => !CFG.nascostiDefault.includes(k))).filter(k => MODES[k]).map(k => `<button onclick="menuAct('hid:${k}')">${HIDDEN.includes(k) ? '🙈' : '👁'} ${MODES[k].name}: ${HIDDEN.includes(k) ? 'nascosto' : 'visibile'}</button>`).join('')}
     ${installEvt ? '<button onclick="menuAct(\'inst\')">📲 Installa app</button>' : ''}
     ${DB_IMPORTED ? '<button onclick="menuAct(\'reset\')">↩ Ripristina esercizi originali</button>' : ''}
     <div class="ddinfo">Esercizi in uso: ${DB.length}${DB_IMPORTED ? ' (importati)' : ''}<br>Versione ${APP_VERSION}<br>Autore: Luigi Antonucci</div>
   </div></div>
   <p class="sub">Scegli come giocare ✨</p>
+  <div class="coll"><span>Hai collezionato <b>${totPremi('stelle')}</b> ⭐</span><span><b>${totPremi('trofei')}</b> 🏆</span></div>
   <button class="main" onclick="start('mix')"><span class="mt">🎲 Mix di tutto</span><span class="ms">${CFG.mixPerFunzione} esercizi per ogni gioco, tutti mescolati</span></button>
   <div class="sec">Approfondisci un gioco · ${CFG.perSezione} esercizi</div>
   <div class="menu">${visibleModes().map(k => { const m = MODES[k], b = badge(k);
@@ -69,14 +127,14 @@ function menuAct(a) {
   const d = $('#dd'); if (d) d.hidden = true;
   if (a === 'imp') $('#file').click();
   else if (a === 'snd') { setSound(!SOUND_ON); if (SOUND_ON) speak('Brava!'); home(); }
-  else if (a === 'exp') exportStats();
+  else if (a === 'exp') exportData();
   else if (a === 'simp') $('#sfile').click();
   else if (a === 'inst') installApp();
   else if (a.startsWith('hid:')) { toggleHidden(a.slice(4)); home(); }
   else if (a === 'reset') resetDB().then(() => home({ msg: 'Esercizi originali (data/db.json) ripristinati.' }));
 }
 
-$('#sfile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) importStatsFile(f, home); });
+$('#sfile').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) importDataFile(f, home); });
 $('#file').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) importFile(f, home); });
 
 function start(m) {
@@ -113,6 +171,13 @@ function show() {
   }
 }
 
+// "← Menu" in una sezione non finita: gli esercizi già fatti sono già nelle statistiche; si registra anche la sezione come interrotta
+function quitSection() {
+  if (S && mode && S.list.length && S.res.length >= S.list.length) return summary(); // già tutti fatti: mostra il riepilogo
+  if (S && mode && mode !== 'mix' && S.res.length && S.i < S.list.length)
+    recordSession({ sezione: mode, totale: S.res.length, esatte: S.esatte, conAiuto: S.aiuto, errate: S.errate, interrotta: true, previsti: S.list.length });
+  home();
+}
 function wrongAns() { errs++; soundWrong(); }
 function say(t, c) { const m = $('#msg'); if (m) { m.textContent = t; m.className = 'msg ' + c; } }
 function nextBtn() { if ($('.next')) return; const b = document.createElement('button'); b.className = 'big next'; b.textContent = 'Avanti →'; b.onclick = advance; $('.card').appendChild(b); }
@@ -123,7 +188,7 @@ function finish(esito) {
   locked = true;
   recordResult(q.mode, { esito, errori: errs, aiuto: helped, ms: Date.now() - t0, testo: describeEx(q) });
   S.res.push(esito);
-  if (esito === 'esatta') { S.esatte++; stars++; } else if (esito === 'aiuto') S.aiuto++; else S.errate++;
+  if (esito === 'esatta') { S.esatte++; PREMI.stelle++; savePremi(); stars = totPremi('stelle'); } else if (esito === 'aiuto') S.aiuto++; else S.errate++;
   $('.stars').textContent = '⭐ ' + stars;
   if (esito === 'errata') { okRun = 0; nextBtn(); }
   else { say(pick(esito === 'esatta' ? PRAISE : HELPED), 'ok'); soundRight(); if (++okRun >= CFG.bravaOgni) { okRun = 0; speak(pick(BRAVA)); } const s = S; setTimeout(() => { if (S === s) advance(); }, 1300); }
@@ -243,12 +308,14 @@ function askHelp() {
 function summary() {
   const n = S.list.length, sc = (S.esatte + S.aiuto * .5) / n;
   recordSession({ sezione: mode, totale: n, esatte: S.esatte, conAiuto: S.aiuto, errate: S.errate });
+  const trofeo = sc * 100 >= CFG.trofeoDa; if (trofeo) { PREMI.trofei++; savePremi(); }
   const lv = sc >= .7 ? 0 : sc >= .4 ? 1 : 2; // 70% e oltre / dal 40% al 70% / sotto il 40%
   const msg = ['Ottimo lavoro! Sei una vera campionessa dei numeri! 🏆', 'Ci siamo quasi! Ancora un piccolo sforzo e sarai perfetta! 💪', 'Puoi fare meglio! Riprova, sono sicura che andrà meglio! 🌈'][lv];
   speak(['Ottimo lavoro!', 'Ci siamo quasi!', 'Puoi fare meglio!'][lv]);
   $('#app').innerHTML = `<h1>${mode === 'mix' ? 'Mix finito!' : 'Sezione finita!'}</h1><div class="card sum">
   <div class="dots">${S.res.map(r => `<span class="dot ${r}">${r === 'esatta' ? '✓' : r === 'aiuto' ? '💡' : '✗'}</span>`).join('')}</div>
   <div class="tot"><div><b class="g">${S.esatte}</b>esatte</div><div><b class="y">${S.aiuto}</b>con aiuto</div><div><b class="r">${S.errate}</b>sbagliate</div></div>
+  ${trofeo ? `<div class="trophy"><span>🏆</span>Hai vinto un trofeo! Ora ne hai ${totPremi('trofei')}</div>` : `<p class="sub small">Con almeno il ${CFG.trofeoDa}% vinci un trofeo 🏆</p>`}
   <p class="q">${msg}</p><button class="big go" onclick="start('${mode}')">Ancora!</button><button class="big next" style="margin-top:10px" onclick="home()">Menu</button></div>`;
 }
 
