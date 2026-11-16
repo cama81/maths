@@ -13,12 +13,12 @@ function cellsHTML(m) {
 // Calcolo in colonna: intestazione h/da/u, riporto/cambio, due numeri, riga, risultato (le caselle hanno id s0, s1... nell'ordine delle risposte)
 function colHTML(m) {
   const { op, a, b, r, ncols, carry } = m.col, nc = ncols + 2; // colonna etichette a sinistra + cifre + colonna del segno a destra
-  const ids = { u: 0 }; let k = 1; if (carry) ids.c = k++; ids.t = k++; ids.h = k++;
+  const auto = !!m.col.autoCarry, ids = { u: 0 }; let k = 1; if (carry && !auto) ids.c = k++; ids.t = k++; ids.h = k++;
   const cc = (t, cls = '') => `<div class="cc ${cls}">${t}</div>`, sl = (i, cls = '') => `<div class="cc"><div class="slot ${cls}" id="s${i}"></div></div>`;
   const place = j => ncols - 1 - j === 0 ? 'u' : ncols - 1 - j === 1 ? 't' : 'h'; // colonna j (0 = a sinistra)
   const digits = n => String(n).padStart(ncols, ' ').split('').map(c => c === ' ' ? '' : c);
   const head = cc('') + ['h', 'da', 'u'].slice(3 - ncols).map(t => cc(t, 'hd')).join('') + cc('');
-  const carryRow = carry ? cc(op === '+' ? 'riporto' : 'cambio', 'lab') + [...Array(ncols)].map((_, j) => place(j) === 't' ? sl(ids.c, 'sm') : cc('')).join('') + cc('') : '';
+  const carryRow = carry ? cc(op === '+' ? 'riporto' : 'cambio', 'lab') + [...Array(ncols)].map((_, j) => place(j) === 't' ? (auto ? `<div class="cc"><div class="autoc" title="scritto in automatico">1</div></div>` : sl(ids.c, 'sm')) : cc('')).join('') + cc('') : '';
   const num = (n, sign) => cc('') + digits(n).map((d, j) => cc(d, place(j))).join('') + cc(sign, sign ? 'op' : '');
   const res = cc('') + [...Array(ncols)].map((_, j) => { const p = place(j);
     return p === 'u' ? sl(0) : p === 't' ? (r >= 10 ? sl(ids.t) : cc('')) : (r >= 100 ? sl(ids.h) : cc('')); }).join('') + cc('');

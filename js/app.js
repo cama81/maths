@@ -35,7 +35,7 @@ function exportData() {
   p.premi = { [PREMI.id]: { stelle: PREMI.stelle, trofei: PREMI.trofei, aggiornato: PREMI.aggiornato, v: PREMI_V } };
   Object.entries(PREMI_IMP).forEach(([id, x]) => { p.premi[id] = x; });
   let es = null; try { es = JSON.parse(localStorage.getItem(LS_KEY)); } catch (e) {}
-  p.impostazioni = { nascosti: HIDDEN, suoni: SOUND_ON, tema: THEME, esercizi: Array.isArray(es) ? es : null };
+  p.impostazioni = { nascosti: HIDDEN, suoni: SOUND_ON, tema: THEME, riportoAuto: AUTO_CARRY, esercizi: Array.isArray(es) ? es : null };
   download('matematica-dati.json', JSON.stringify(p, null, 2));
 }
 function applyData(pkg) {
@@ -57,8 +57,9 @@ function applyData(pkg) {
     if (Array.isArray(imp.nascosti)) { HIDDEN = imp.nascosti.filter(k => MODES[k]); try { localStorage.setItem(HID_KEY, JSON.stringify(HIDDEN)); } catch (e) {} }
     if (typeof imp.suoni === 'boolean') setSound(imp.suoni);
     if (typeof imp.tema === 'string') setTheme(imp.tema);
+    if (typeof imp.riportoAuto === 'boolean') setAutoCarry(imp.riportoAuto);
     if (Array.isArray(imp.esercizi)) { const { db, raw } = buildDB(imp.esercizi); if (db.length) { DB = db; DB_IMPORTED = true; try { localStorage.setItem(LS_KEY, JSON.stringify(raw)); } catch (e) {} } }
-    parts.push('Impostazioni applicate (giochi nascosti, suoni, tema' + (Array.isArray(imp.esercizi) ? ', esercizi importati' : '') + ').');
+    parts.push('Impostazioni applicate (giochi nascosti, suoni, tema, riporto automatico' + (Array.isArray(imp.esercizi) ? ', esercizi importati' : '') + ').');
   }
   return { msg: parts.join(' '), errors: r.fonti.length ? r.errors : [] };
 }
@@ -79,6 +80,11 @@ function setTheme(t) {
   if (THEME === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', THEME);
 }
 setTheme(THEME);
+
+// Riporto/cambio automatico in "Colonna facile" (attivo all'inizio); si cambia da ⋮
+const CARRY_KEY = 'matematica2.riportoAuto';
+let AUTO_CARRY = (() => { try { return localStorage.getItem(CARRY_KEY) !== 'no'; } catch (e) { return true; } })();
+function setAutoCarry(v) { AUTO_CARRY = !!v; try { localStorage.setItem(CARRY_KEY, AUTO_CARRY ? 'si' : 'no'); } catch (e) {} }
 
 // Giochi nascosti (le versioni difficili all'inizio); si riattivano da ⋮, la scelta resta salvata sul dispositivo
 const HID_KEY = 'matematica2.nascosti';
@@ -115,6 +121,7 @@ function home(report) {
   <div class="dd" id="dd" hidden>
     <button onclick="menuAct('imp')">⬆ Importa esercizi</button>
     <button onclick="menuAct('snd')">${SOUND_ON ? '🔊 Suoni e voce: attivi' : '🔇 Suoni e voce: spenti'}</button>
+    <button onclick="menuAct('carry')">${AUTO_CARRY ? '✅' : '⬜'} Riporto e cambio automatici (Colonna facile)</button>
     <button onclick="menuAct('tema')">${THEMES[THEME]}</button>
     <button onclick="menuAct('exp')">📤 Esporta dati</button>
     <button onclick="menuAct('simp')">📥 Importa dati</button>
@@ -143,6 +150,7 @@ function menuAct(a) {
   const d = $('#dd'); if (d) d.hidden = true;
   if (a === 'imp') $('#file').click();
   else if (a === 'snd') { setSound(!SOUND_ON); if (SOUND_ON) speak('Brava!'); home(); }
+  else if (a === 'carry') { setAutoCarry(!AUTO_CARRY); home(); $('#dd').hidden = false; }
   else if (a === 'tema') { setTheme({ auto: 'light', light: 'dark', dark: 'auto' }[THEME]); home(); $('#dd').hidden = false; }
   else if (a === 'exp') exportData();
   else if (a === 'simp') $('#sfile').click();
@@ -165,6 +173,8 @@ function start(m) {
 function show() {
   locked = false; cur = 0; buf = ''; tries = 0; errs = 0; helped = false; hp = null; t0 = Date.now();
   q = JSON.parse(JSON.stringify(S.list[S.i]));
+  // Colonna facile: con l'opzione attiva il riporto/cambio è già scritto e non va inserito (vale anche nel Mix)
+  if (q.mode === 'colf' && q.col && q.col.carry && AUTO_CARRY) { q.ans.splice(1, 1); q.col.autoCarry = true; }
   const hb = '<button class="help-btn" id="hb" onclick="askHelp()">💡 Aiuto</button>', ms = '<div class="msg" id="msg"></div><div id="help"></div>';
   if (q.kind === 'fill') {
     shell(`<p class="q">${q.title}</p>${q.abaco !== undefined ? abSVG(Math.floor(q.abaco / 10), q.abaco % 10) : ''}${q.col ? colHTML(q) : q.miss ? missHTML(q) : `<div class="row">${cellsHTML(q)}</div>`}${ms}${hb}${padHTML()}`);

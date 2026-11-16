@@ -279,3 +279,4 @@ h3 small{font-weight:400;color:var(--mute);font-size:.78rem}
 
 
 :root[data-theme="light"]{color-scheme:light}:root[data-theme="dark"]{color-scheme:dark}
+.autoc{min-width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:1.05rem;font-weight:700;border:2.5px solid var(--b);color:var(--b);background:rgba(245,143,189,.15)}
