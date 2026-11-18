@@ -27,6 +27,12 @@ function colHTML(m) {
   <p class="sub small">Comincia dalle unità, poi vai a sinistra!</p>`;
 }
 // Numero mancante: 20 + [ ] + 5 = 75
+// Operazione decina: 34 + 20 = ?  (le decine aggiunte o tolte sono evidenziate)
+function decHTML(m) {
+  const { op, a, b } = m.dec;
+  return `<div class="row eq"><div class="n">${a}</div><div class="op">${op === '+' ? '+' : '−'}</div><div class="n tg">${b}</div><div class="op">=</div><div class="slot" id="s0"></div></div>
+  <p class="sub small">Cambiano solo le decine: le unità restano uguali!</p>`;
+}
 function missHTML(m) {
   const items = m.cells.map(v => v === null ? '<div class="slot" id="s0"></div>' : `<div class="n">${v}</div>`).join('<div class="op">+</div>');
   return `<div class="row eq">${items}<div class="op">=</div><div class="n tg">${m.miss.total}</div></div>`;

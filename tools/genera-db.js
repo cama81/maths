@@ -17,6 +17,11 @@ many(40, () => { // salti
   for (let i = 0; i < 3; i++) { let d = (Math.random() < .5 ? 1 : -1) * R(1, Math.random() < .5 ? 9 : 20); if (v + d < 1 || v + d > 100) d = -d; v += d; ops.push(d); }
   return { tipo: 'salti', partenza: p, operazioni: ops };
 });
+many(40, () => { // operazione decina: numero ± decina piena
+  const plus = Math.random() < .5, b = 10 * R(1, 9);
+  const a = plus ? (Math.random() < .25 ? 10 * R(0, 10 - b / 10) : R(1, 100 - b)) : (Math.random() < .25 ? 10 * R(b / 10, 10) : R(b, 99));
+  return { tipo: 'decina', operazione: plus ? '+' : '-', a, b };
+});
 many(40, () => { // confronto
   const a = R(1, 100); let b = Math.random() < .15 ? a : R(1, 100);
   if (Math.random() < .4) b = Math.max(1, Math.min(100, a + R(-9, 9)));

@@ -5,6 +5,7 @@
 const MODES = {
   serie: { c: '240,140,184', icon: '🔢', name: 'Serie di numeri' },
   salti: { c: '43,181,160', icon: '➕', name: 'Più e meno' },
+  dec:   { c: '120,160,240', icon: '🔟', name: 'Operazione decina' },
   conf:  { c: '243,194,91', icon: '⚖️', name: 'Quale segno?' },
   pd:    { c: '169,139,230', icon: '↔️', name: 'Prima e dopo' },
   ord:   { c: '110,185,235', icon: '📶', name: 'Metti in ordine' },
@@ -60,6 +61,15 @@ function parseOne(e) {
     if (vals.some(v => !inR(v))) throw new Error('i risultati escono da 0–100');
     return mkFill('salti', e.titolo || 'Segui le frecce: fai un calcolo dopo l’altro', vals, vals.map((_, k) => k).slice(1), ops);
   }
+  if (t === 'decina') { // un numero più o meno una decina piena: 34 + 20 = ?
+    const op = { '+': '+', '-': '-', '−': '-' }[e.operazione];
+    if (!op) throw new Error('"operazione" deve essere + oppure -');
+    if (!inR(e.a)) throw new Error('"a" deve essere intero da 0 a 100');
+    if (!(Number.isInteger(e.b) && e.b >= 10 && e.b <= 90 && e.b % 10 === 0)) throw new Error('"b" deve essere una decina piena: 10, 20, 30… 90');
+    const r = op === '+' ? e.a + e.b : e.a - e.b;
+    if (!inR(r)) throw new Error('il risultato deve stare tra 0 e 100');
+    return { kind: 'fill', mode: 'dec', title: op === '+' ? `Aggiungi ${e.b}: quanto fa?` : `Togli ${e.b}: quanto fa?`, cells: [], deltas: [], dec: { op, a: e.a, b: e.b }, ans: [r] };
+  }
   if (t === 'confronto') {
     if (!inR(e.a) || !inR(e.b)) throw new Error('"a" e "b" devono essere interi da 0 a 100');
     return { kind: 'cmp', mode: 'conf', a: e.a, b: e.b };
@@ -109,7 +119,7 @@ function parseOne(e) {
     if (e.modalita && e.modalita !== 'leggi') throw new Error('"modalita" deve essere leggi o costruisci');
     return abLeggi(e.numero);
   }
-  throw new Error('"tipo" sconosciuto (serie, salti, confronto, prima_dopo, ordina, minmax, colonna, mancante, abaco)');
+  throw new Error('"tipo" sconosciuto (serie, salti, decina, confronto, prima_dopo, ordina, minmax, colonna, mancante, abaco)');
 }
 
 // ---- Soluzioni proposte dal pulsante Aiuto (1 giusta + 2 sbagliate, mescolate) ----
@@ -146,6 +156,7 @@ function colOptions(r) {
 function describeEx(q) {
   const U = c => c === null ? '?' : c;
   if (q.col) return `${q.col.a} ${q.col.op === '+' ? '+' : '−'} ${q.col.b} in colonna`;
+  if (q.dec) return `${q.dec.a} ${q.dec.op === '+' ? '+' : '−'} ${q.dec.b} = ?`;
   if (q.miss) return q.cells.map(U).join(' + ') + ' = ' + q.miss.total;
   if (q.abaco !== undefined) return 'abaco: leggere ' + q.abaco;
   if (q.kind === 'fill') return q.mode === 'pd' ? `prima e dopo il ${q.cells[1]}` : q.cells.map((c, i) => (i && q.deltas[i - 1] ? signed(q.deltas[i - 1]) + ' ' : i ? '· ' : '') + U(c)).join(' ');

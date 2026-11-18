@@ -177,7 +177,7 @@ function show() {
   if (q.mode === 'colf' && q.col && q.col.carry && AUTO_CARRY) { q.ans.splice(1, 1); q.col.autoCarry = true; }
   const hb = '<button class="help-btn" id="hb" onclick="askHelp()">💡 Aiuto</button>', ms = '<div class="msg" id="msg"></div><div id="help"></div>';
   if (q.kind === 'fill') {
-    shell(`<p class="q">${q.title}</p>${q.abaco !== undefined ? abSVG(Math.floor(q.abaco / 10), q.abaco % 10) : ''}${q.col ? colHTML(q) : q.miss ? missHTML(q) : `<div class="row">${cellsHTML(q)}</div>`}${ms}${hb}${padHTML()}`);
+    shell(`<p class="q">${q.title}</p>${q.abaco !== undefined ? abSVG(Math.floor(q.abaco / 10), q.abaco % 10) : ''}${q.col ? colHTML(q) : q.dec ? decHTML(q) : q.miss ? missHTML(q) : `<div class="row">${cellsHTML(q)}</div>`}${ms}${hb}${padHTML()}`);
     hl();
   } else if (q.kind === 'cmp') {
     shell(`<p class="q">Quale segno va tra i due numeri?</p><div class="row"><div class="n">${q.a}</div><div class="slot" style="min-width:48px">?</div><div class="n">${q.b}</div></div>
